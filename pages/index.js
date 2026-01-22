@@ -241,7 +241,7 @@ export default function Dashboard() {
                 <Flame className="w-6 h-6 text-orange-400" />
                 <h2 className="text-2xl font-bold text-white">Derniers ajouts</h2>
               </div>
-              {data.sneakers.length > 6 && (
+              {sneakers.length > 6 && (
                 <a href="/inventory" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
                   Voir tout →
                 </a>
