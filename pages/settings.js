@@ -1,89 +1,20 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { Settings, Key, CheckCircle, XCircle, Loader2, ExternalLink, Database, Wifi } from 'lucide-react'
+import { Settings, Sun, Moon } from 'lucide-react'
 import Layout from '../components/Layout'
-import { loadData, saveData } from '../lib/store'
-import { saveApiKey, testApiConnection, isApiConfigured } from '../lib/kicksdb'
+import { loadData } from '../lib/store'
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function SettingsPage() {
   const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
   const [isLoaded, setIsLoaded] = useState(false)
-  const [apiKey, setApiKey] = useState('')
-  const [testStatus, setTestStatus] = useState(null) // null, 'testing', 'success', 'error'
-  const [testError, setTestError] = useState('')
-  const [saved, setSaved] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     const loaded = loadData()
     setData(loaded)
-    setApiKey(loaded.settings?.kicksdbApiKey || '')
     setIsLoaded(true)
   }, [])
-
-  const handleSaveApiKey = async () => {
-    // Sauvegarder la clé
-    saveApiKey(apiKey)
-
-    // Mettre à jour le state local
-    setData(prev => ({
-      ...prev,
-      settings: { ...prev.settings, kicksdbApiKey: apiKey }
-    }))
-
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
-
-    // Tester la connexion si une clé est fournie
-    if (apiKey) {
-      await handleTestConnection()
-    }
-  }
-
-  const handleTestConnection = async () => {
-    if (!apiKey) {
-      setTestStatus('error')
-      setTestError('Aucune clé API fournie')
-      return
-    }
-
-    setTestStatus('testing')
-    setTestError('')
-
-    // Sauvegarder d'abord pour que le test utilise la bonne clé
-    saveApiKey(apiKey)
-
-    const { success, error } = await testApiConnection()
-
-    if (success) {
-      setTestStatus('success')
-    } else {
-      setTestStatus('error')
-      switch (error) {
-        case 'INVALID_API_KEY':
-          setTestError('Clé API invalide')
-          break
-        case 'RATE_LIMIT':
-          setTestError('Limite de requêtes atteinte')
-          break
-        case 'NETWORK_ERROR':
-          setTestError('Erreur réseau - Vérifiez votre connexion')
-          break
-        default:
-          setTestError(`Erreur: ${error}`)
-      }
-    }
-  }
-
-  const handleClearApiKey = () => {
-    setApiKey('')
-    saveApiKey('')
-    setTestStatus(null)
-    setTestError('')
-    setData(prev => ({
-      ...prev,
-      settings: { ...prev.settings, kicksdbApiKey: '' }
-    }))
-  }
 
   if (!isLoaded) {
     return (
@@ -110,116 +41,50 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* API Configuration */}
-          <div className="card p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
-                <Database className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">KicksDB API</h2>
-                <p className="text-sm text-gray-400">Accès aux données sneakers en temps réel</p>
-              </div>
-            </div>
+          {/* Apparence */}
+          <div className="card p-6">
+            <h2 className="text-xl font-semibold mb-6">Apparence</h2>
 
-            <div className="bg-dark-700 rounded-xl p-4 text-sm">
-              <div className="flex items-start gap-3">
-                <Wifi className="w-5 h-5 text-blue-400 mt-0.5" />
-                <div>
-                  <p className="text-gray-300 mb-2">
-                    KicksDB fournit des données en temps réel sur plus de <span className="text-white font-semibold">175,000 sneakers</span> depuis StockX, GOAT et autres marketplaces.
-                  </p>
-                  <p className="text-gray-400 mb-3">
-                    Le plan gratuit inclut <span className="text-emerald-400">1,000 requêtes/mois</span>.
-                  </p>
-                  <a
-                    href="https://kicks.dev/dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Obtenir une clé API gratuite
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* API Key Input */}
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                <Key className="w-4 h-4 inline mr-2" />
-                Clé API KicksDB
-              </label>
-              <div className="flex gap-3">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Entrez votre clé API..."
-                  className="flex-1"
-                />
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={testStatus === 'testing'}
-                  className="btn btn-primary px-6"
-                >
-                  {saved ? 'Sauvegardé ✓' : 'Sauvegarder'}
-                </button>
-              </div>
-            </div>
-
-            {/* Test Connection */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleTestConnection}
-                disabled={!apiKey || testStatus === 'testing'}
-                className="btn btn-secondary flex items-center gap-2"
-              >
-                {testStatus === 'testing' ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Test en cours...
-                  </>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {theme === 'dark' ? (
+                  <Moon className="w-6 h-6 text-blue-400" />
                 ) : (
-                  <>
-                    <Wifi className="w-4 h-4" />
-                    Tester la connexion
-                  </>
+                  <Sun className="w-6 h-6 text-amber-400" />
                 )}
-              </button>
-
-              {testStatus === 'success' && (
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Connexion réussie!</span>
+                <div>
+                  <div className="font-medium">
+                    {theme === 'dark' ? 'Mode sombre' : 'Mode clair'}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {theme === 'dark' ? 'Interface avec fond sombre' : 'Interface avec fond clair'}
+                  </div>
                 </div>
-              )}
-
-              {testStatus === 'error' && (
-                <div className="flex items-center gap-2 text-red-400">
-                  <XCircle className="w-5 h-5" />
-                  <span>{testError}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Clear API Key */}
-            {apiKey && (
-              <div className="pt-4 border-t border-gray-700">
-                <button
-                  onClick={handleClearApiKey}
-                  className="text-sm text-red-400 hover:text-red-300 transition-colors"
-                >
-                  Supprimer la clé API
-                </button>
               </div>
-            )}
+
+              {/* Toggle switch */}
+              <button
+                onClick={toggleTheme}
+                className={`relative w-14 h-7 rounded-full transition-colors ${
+                  theme === 'dark' ? 'bg-blue-600' : 'bg-amber-400'
+                }`}
+              >
+                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  theme === 'dark' ? 'left-1' : 'translate-x-7'
+                }`}>
+                  {theme === 'dark' ? (
+                    <Moon className="w-3 h-3 text-blue-600 m-1" />
+                  ) : (
+                    <Sun className="w-3 h-3 text-amber-500 m-1" />
+                  )}
+                </div>
+              </button>
+            </div>
           </div>
 
           {/* Stats */}
           <div className="card p-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4">Statistiques locales</h3>
+            <h3 className="text-lg font-semibold mb-4">Statistiques</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="bg-dark-700 rounded-xl p-4">
                 <div className="text-3xl font-bold text-blue-400">{data.sneakers.length}</div>
@@ -242,12 +107,9 @@ export default function SettingsPage() {
 
           {/* About */}
           <div className="card p-6 mt-6">
-            <h3 className="text-lg font-semibold mb-2">À propos</h3>
+            <h3 className="text-lg font-semibold mb-2">A propos</h3>
             <p className="text-gray-400 text-sm">
-              <span className="text-white font-semibold">OneStock</span> - Gestion de stock sneakers
-            </p>
-            <p className="text-gray-500 text-xs mt-2">
-              Les données sont stockées localement dans votre navigateur.
+              <span className="font-semibold">OneStock</span> - Gestion de stock sneakers
             </p>
           </div>
         </div>
