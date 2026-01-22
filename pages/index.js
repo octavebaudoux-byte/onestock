@@ -5,35 +5,21 @@ import { Package, TrendingUp, Zap, Target, Flame, ArrowUpRight, Percent, Sparkle
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
-import { loadData, saveData, calculateStats, formatPrice } from '../lib/store'
+import { calculateStats, formatPrice } from '../lib/store'
+import { useData } from '../hooks/useData'
 
 export default function Dashboard() {
-  const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
+  const { sneakers, loading, save, remove } = useData()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
-  const [isLoaded, setIsLoaded] = useState(false)
   const [modalMode, setModalMode] = useState('add')
   const [animatedStats, setAnimatedStats] = useState({ profit: 0, stock: 0, sold: 0, value: 0 })
 
-  // Charger les données
-  useEffect(() => {
-    const loaded = loadData()
-    setData(loaded)
-    setIsLoaded(true)
-  }, [])
-
-  // Sauvegarder les données
-  useEffect(() => {
-    if (isLoaded) {
-      saveData(data)
-    }
-  }, [data, isLoaded])
-
-  const stats = calculateStats(data.sneakers)
+  const stats = calculateStats(sneakers)
 
   // Animation des stats au chargement
   useEffect(() => {
-    if (isLoaded && data.sneakers.length > 0) {
+    if (!loading && sneakers.length > 0) {
       const duration = 1500
       const steps = 60
       const interval = duration / steps
@@ -56,32 +42,17 @@ export default function Dashboard() {
 
       return () => clearInterval(timer)
     }
-  }, [isLoaded, data.sneakers.length])
+  }, [loading, sneakers.length])
 
   // Handlers
-  const handleSaveSneaker = (sneaker) => {
-    setData(prev => {
-      const exists = prev.sneakers.find(s => s.id === sneaker.id)
-      if (exists) {
-        return {
-          ...prev,
-          sneakers: prev.sneakers.map(s => s.id === sneaker.id ? sneaker : s)
-        }
-      }
-      return {
-        ...prev,
-        sneakers: [...prev.sneakers, sneaker]
-      }
-    })
+  const handleSaveSneaker = async (sneaker) => {
+    await save(sneaker)
     setEditingSneaker(null)
   }
 
-  const handleDeleteSneaker = (id) => {
+  const handleDeleteSneaker = async (id) => {
     if (confirm('Supprimer cette paire ?')) {
-      setData(prev => ({
-        ...prev,
-        sneakers: prev.sneakers.filter(s => s.id !== id)
-      }))
+      await remove(id)
     }
   }
 
@@ -104,17 +75,17 @@ export default function Dashboard() {
   }
 
   // Dernières paires (6 pour la grille)
-  const recentSneakers = [...data.sneakers]
+  const recentSneakers = [...sneakers]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 6)
 
   // Dernières ventes
-  const recentSales = data.sneakers
+  const recentSales = sneakers
     .filter(s => s.status === 'sold')
     .sort((a, b) => new Date(b.sellDate) - new Date(a.sellDate))
     .slice(0, 4)
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="flex flex-col items-center gap-4">

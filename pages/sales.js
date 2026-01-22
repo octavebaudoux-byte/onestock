@@ -1,35 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SaleCard from '../components/SaleCard'
-import { loadData, saveData, formatPrice, exportToCSV } from '../lib/store'
+import { formatPrice, exportToCSV } from '../lib/store'
+import { useData } from '../hooks/useData'
 
 export default function Sales() {
-  const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
+  const { sneakers, loading, save, remove } = useData()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
-  const [isLoaded, setIsLoaded] = useState(false)
   const [timeRange, setTimeRange] = useState('all')
-  const [modalMode, setModalMode] = useState('sale') // 'add', 'sale', 'edit'
-
-  useEffect(() => {
-    const loaded = loadData()
-    setData(loaded)
-    setIsLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (isLoaded) {
-      saveData(data)
-    }
-  }, [data, isLoaded])
+  const [modalMode, setModalMode] = useState('sale')
 
   // Filtrer les ventes
   const sales = useMemo(() => {
-    let result = data.sneakers.filter(s => s.status === 'sold')
+    let result = sneakers.filter(s => s.status === 'sold')
 
     // Filtre par période
     if (timeRange !== 'all') {
@@ -52,7 +40,7 @@ export default function Sales() {
     }
 
     return result.sort((a, b) => new Date(b.sellDate) - new Date(a.sellDate))
-  }, [data.sneakers, timeRange])
+  }, [sneakers, timeRange])
 
   // Calculer les stats
   const salesStats = useMemo(() => {
@@ -82,29 +70,14 @@ export default function Sales() {
   }, [sales])
 
   // Handlers
-  const handleSaveSneaker = (sneaker) => {
-    setData(prev => {
-      const exists = prev.sneakers.find(s => s.id === sneaker.id)
-      if (exists) {
-        return {
-          ...prev,
-          sneakers: prev.sneakers.map(s => s.id === sneaker.id ? sneaker : s)
-        }
-      }
-      return {
-        ...prev,
-        sneakers: [...prev.sneakers, sneaker]
-      }
-    })
+  const handleSaveSneaker = async (sneaker) => {
+    await save(sneaker)
     setEditingSneaker(null)
   }
 
-  const handleDeleteSneaker = (id) => {
+  const handleDeleteSneaker = async (id) => {
     if (confirm('Supprimer cette vente ?')) {
-      setData(prev => ({
-        ...prev,
-        sneakers: prev.sneakers.filter(s => s.id !== id)
-      }))
+      await remove(id)
     }
   }
 
@@ -127,10 +100,10 @@ export default function Sales() {
   }
 
   const handleExport = () => {
-    exportToCSV(data.sneakers, 'sold')
+    exportToCSV(sneakers, 'sold')
   }
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-400">Chargement...</div>

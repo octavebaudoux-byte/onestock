@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import Head from 'next/head'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
@@ -6,32 +6,18 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts'
 import Layout from '../components/Layout'
-import SneakerModal from '../components/SneakerModal'
-import { loadData, saveData, formatPrice, calculateStats } from '../lib/store'
+import { formatPrice, calculateStats } from '../lib/store'
+import { useData } from '../hooks/useData'
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
 
 export default function Stats() {
-  const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const { sneakers, loading } = useData()
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
-  useEffect(() => {
-    const loaded = loadData()
-    setData(loaded)
-    setIsLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (isLoaded) {
-      saveData(data)
-    }
-  }, [data, isLoaded])
-
-  const stats = calculateStats(data.sneakers)
+  const stats = calculateStats(sneakers)
 
   // Années disponibles (basées sur les données)
   const availableYears = useMemo(() => {
@@ -39,13 +25,13 @@ export default function Stats() {
     const currentYear = new Date().getFullYear()
     years.add(currentYear)
 
-    data.sneakers.forEach(s => {
+    sneakers.forEach(s => {
       if (s.buyDate) years.add(new Date(s.buyDate).getFullYear())
       if (s.sellDate) years.add(new Date(s.sellDate).getFullYear())
     })
 
     return Array.from(years).sort((a, b) => b - a)
-  }, [data.sneakers])
+  }, [sneakers])
 
   // Données pour le graphique par marque
   const brandChartData = useMemo(() => {
@@ -70,7 +56,7 @@ export default function Stats() {
     }
 
     // Remplir avec les données
-    data.sneakers.forEach(s => {
+    sneakers.forEach(s => {
       // Achats
       if (s.buyDate) {
         const buyDate = new Date(s.buyDate)
@@ -92,12 +78,12 @@ export default function Stats() {
     })
 
     return Object.values(months)
-  }, [data.sneakers, selectedYear])
+  }, [sneakers, selectedYear])
 
   // Données pour le pie chart des plateformes
   const platformChartData = useMemo(() => {
     const platforms = {}
-    data.sneakers.filter(s => s.status === 'sold').forEach(s => {
+    sneakers.filter(s => s.status === 'sold').forEach(s => {
       const platform = s.sellPlatform || 'Non spécifié'
       if (!platforms[platform]) platforms[platform] = 0
       platforms[platform]++
@@ -105,11 +91,11 @@ export default function Stats() {
     return Object.entries(platforms)
       .map(([platform, count]) => ({ name: platform, value: count }))
       .sort((a, b) => b.value - a.value)
-  }, [data.sneakers])
+  }, [sneakers])
 
   // Top performers
   const topPerformers = useMemo(() => {
-    return data.sneakers
+    return sneakers
       .filter(s => s.status === 'sold')
       .map(s => ({
         ...s,
@@ -118,18 +104,7 @@ export default function Stats() {
       }))
       .sort((a, b) => b.profit - a.profit)
       .slice(0, 5)
-  }, [data.sneakers])
-
-  const openAddModal = () => {
-    setIsModalOpen(true)
-  }
-
-  const handleSaveSneaker = (sneaker) => {
-    setData(prev => ({
-      ...prev,
-      sneakers: [...prev.sneakers, sneaker]
-    }))
-  }
+  }, [sneakers])
 
   const handlePrevYear = () => {
     setSelectedYear(prev => prev - 1)
@@ -141,7 +116,7 @@ export default function Stats() {
     }
   }
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-400">Chargement...</div>
@@ -173,7 +148,7 @@ export default function Stats() {
         <title>Statistiques - OneStock</title>
       </Head>
 
-      <Layout onAddClick={openAddModal}>
+      <Layout>
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
@@ -181,7 +156,7 @@ export default function Stats() {
             <p className="text-gray-400">Analyse détaillée de tes performances</p>
           </div>
 
-          {data.sneakers.length === 0 ? (
+          {sneakers.length === 0 ? (
             <div className="card text-center py-16">
               <div className="text-5xl mb-4">📊</div>
               <p className="text-gray-400 mb-2">Pas encore de données</p>
@@ -321,13 +296,6 @@ export default function Stats() {
           )}
         </div>
       </Layout>
-
-      <SneakerModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveSneaker}
-        mode="add"
-      />
     </>
   )
 }

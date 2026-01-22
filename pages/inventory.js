@@ -1,16 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import Head from 'next/head'
 import { Search } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
-import { loadData, saveData, formatPrice, exportToCSV } from '../lib/store'
+import { formatPrice, exportToCSV } from '../lib/store'
+import { useData } from '../hooks/useData'
 
 export default function Inventory() {
-  const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
+  const { sneakers, loading, save, remove } = useData()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
-  const [isLoaded, setIsLoaded] = useState(false)
   const [modalMode, setModalMode] = useState('add')
 
   // Filtres
@@ -19,21 +19,9 @@ export default function Inventory() {
   const [filterBrand, setFilterBrand] = useState('all')
   const [sortBy, setSortBy] = useState('date')
 
-  useEffect(() => {
-    const loaded = loadData()
-    setData(loaded)
-    setIsLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (isLoaded) {
-      saveData(data)
-    }
-  }, [data, isLoaded])
-
   // Filtrage et tri
   const filteredSneakers = useMemo(() => {
-    let result = [...data.sneakers]
+    let result = [...sneakers]
 
     // Search
     if (searchTerm) {
@@ -79,32 +67,17 @@ export default function Inventory() {
     }
 
     return result
-  }, [data.sneakers, searchTerm, filterStatus, filterBrand, sortBy])
+  }, [sneakers, searchTerm, filterStatus, filterBrand, sortBy])
 
   // Handlers
-  const handleSaveSneaker = (sneaker) => {
-    setData(prev => {
-      const exists = prev.sneakers.find(s => s.id === sneaker.id)
-      if (exists) {
-        return {
-          ...prev,
-          sneakers: prev.sneakers.map(s => s.id === sneaker.id ? sneaker : s)
-        }
-      }
-      return {
-        ...prev,
-        sneakers: [...prev.sneakers, sneaker]
-      }
-    })
+  const handleSaveSneaker = async (sneaker) => {
+    await save(sneaker)
     setEditingSneaker(null)
   }
 
-  const handleDeleteSneaker = (id) => {
+  const handleDeleteSneaker = async (id) => {
     if (confirm('Supprimer cette paire ?')) {
-      setData(prev => ({
-        ...prev,
-        sneakers: prev.sneakers.filter(s => s.id !== id)
-      }))
+      await remove(id)
     }
   }
 
@@ -127,20 +100,20 @@ export default function Inventory() {
   }
 
   const handleExport = () => {
-    exportToCSV(data.sneakers, 'stock')
+    exportToCSV(sneakers, 'stock')
   }
 
   // Marques présentes dans le stock
-  const brandsInStock = [...new Set(data.sneakers.map(s => s.brand))].sort()
+  const brandsInStock = [...new Set(sneakers.map(s => s.brand))].sort()
 
   // Stats rapides
-  const stockCount = data.sneakers.filter(s => s.status === 'stock').length
-  const soldCount = data.sneakers.filter(s => s.status === 'sold').length
-  const totalValue = data.sneakers
+  const stockCount = sneakers.filter(s => s.status === 'stock').length
+  const soldCount = sneakers.filter(s => s.status === 'sold').length
+  const totalValue = sneakers
     .filter(s => s.status === 'stock')
-    .reduce((sum, s) => sum + s.buyPrice, 0)
+    .reduce((sum, s) => sum + (s.buyPrice || 0), 0)
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-400">Chargement...</div>
@@ -239,7 +212,7 @@ export default function Inventory() {
               <div className="text-5xl mb-4">🔍</div>
               <p className="text-gray-400 mb-2">Aucune paire trouvée</p>
               <p className="text-sm text-gray-500">
-                {data.sneakers.length === 0
+                {sneakers.length === 0
                   ? 'Ajoute ta première paire pour commencer'
                   : 'Essaie de modifier tes filtres'}
               </p>
