@@ -64,7 +64,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     setSearchResults([])
   }, [sneaker, isOpen, mode])
 
-  // Recherche avec debounce + AbortController pour éviter les race conditions
+  // Recherche avec debounce - appel direct à KicksDB API
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([])
@@ -79,36 +79,54 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     const abortController = new AbortController()
 
     const timeoutId = setTimeout(async () => {
+      const apiKey = process.env.NEXT_PUBLIC_KICKSDB_API_KEY
+
+      if (!apiKey) {
+        // Pas de clé API, utiliser la recherche locale
+        const localResults = searchSneakers(searchQuery)
+        if (!abortController.signal.aborted) {
+          setSearchResults(localResults)
+          setIsSearching(false)
+        }
+        return
+      }
+
       try {
         const response = await fetch(
-          `/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`,
-          { signal: abortController.signal }
+          `https://api.kicks.dev/v3/stockx/products?query=${encodeURIComponent(searchQuery)}&limit=20`,
+          {
+            headers: { 'Authorization': apiKey },
+            signal: abortController.signal,
+          }
         )
-        const data = await response.json()
 
         if (abortController.signal.aborted) return
 
-        if (response.ok && data.results?.length > 0) {
-          setSearchResults(data.results)
-        } else if (data.error) {
-          setApiError(data.error)
-          const localResults = searchSneakers(searchQuery)
-          setSearchResults(localResults)
+        if (response.ok) {
+          const data = await response.json()
+          const results = (data.data || []).map(product => ({
+            id: product.id || product.slug,
+            name: product.title || product.name,
+            brand: product.brand || '',
+            sku: product.sku || '',
+            imageUrl: product.image || product.gallery?.[0] || '',
+            colorway: product.colorway || '',
+            lowestPrice: product.min_price || null,
+          }))
+          setSearchResults(results.length > 0 ? results : searchSneakers(searchQuery))
         } else {
-          const localResults = searchSneakers(searchQuery)
-          setSearchResults(localResults)
+          setSearchResults(searchSneakers(searchQuery))
         }
       } catch (err) {
         if (err.name === 'AbortError') return
         console.error('Search error:', err)
-        const localResults = searchSneakers(searchQuery)
-        setSearchResults(localResults)
+        setSearchResults(searchSneakers(searchQuery))
       } finally {
         if (!abortController.signal.aborted) {
           setIsSearching(false)
         }
       }
-    }, 300)
+    }, 400)
 
     return () => {
       clearTimeout(timeoutId)
