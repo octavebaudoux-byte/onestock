@@ -6,6 +6,11 @@
   box-sizing: border-box;
 }
 
+/* Safe area for iOS notch/home bar */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Dark mode (default) */
 body {
   background-color: #070b14;
