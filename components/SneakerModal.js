@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2 } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, CONDITIONS, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
@@ -30,6 +30,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [apiError, setApiError] = useState(null)
+  const latestQueryRef = useRef('')
 
   useEffect(() => {
     if (sneaker) {
@@ -66,7 +67,9 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
 
   // Recherche avec debounce via API route (server-side pour éviter CORS)
   useEffect(() => {
-    if (searchQuery.length < 2) {
+    latestQueryRef.current = searchQuery
+
+    if (searchQuery.length < 3) {
       setSearchResults([])
       setApiError(null)
       setIsSearching(false)
@@ -77,34 +80,44 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     setApiError(null)
 
     const abortController = new AbortController()
+    const queryAtRequest = searchQuery
 
     const timeoutId = setTimeout(async () => {
+      const fetchUrl = `/api/sneakers/search?query=${encodeURIComponent(queryAtRequest)}&limit=20`
+      console.log('[Search] Fetching for query:', queryAtRequest)
+
       try {
-        const response = await fetch(
-          `/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`,
-          { signal: abortController.signal }
-        )
+        const response = await fetch(fetchUrl, {
+          signal: abortController.signal,
+          cache: 'no-store',
+        })
 
         if (abortController.signal.aborted) return
+        // Vérifier que la query n'a pas changé pendant le fetch
+        if (latestQueryRef.current !== queryAtRequest) return
 
         const data = await response.json()
 
+        // Double-vérification après parsing JSON
+        if (latestQueryRef.current !== queryAtRequest) return
+
         if (response.ok && data.results?.length > 0) {
+          console.log('[Search] Got', data.results.length, 'results for:', queryAtRequest)
           setSearchResults(data.results)
         } else {
-          // Fallback sur la recherche locale
-          setSearchResults(searchSneakers(searchQuery))
+          setSearchResults(searchSneakers(queryAtRequest))
         }
       } catch (err) {
         if (err.name === 'AbortError') return
-        // Fallback sur la recherche locale
-        setSearchResults(searchSneakers(searchQuery))
+        if (latestQueryRef.current !== queryAtRequest) return
+        console.error('[Search] Error:', err.message)
+        setSearchResults(searchSneakers(queryAtRequest))
       } finally {
-        if (!abortController.signal.aborted) {
+        if (!abortController.signal.aborted && latestQueryRef.current === queryAtRequest) {
           setIsSearching(false)
         }
       }
-    }, 400)
+    }, 500)
 
     return () => {
       clearTimeout(timeoutId)
@@ -265,7 +278,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 </div>
               )}
 
-              {showSearch && searchQuery.length >= 2 && searchResults.length === 0 && (
+              {showSearch && searchQuery.length >= 3 && searchResults.length === 0 && (
                 <div className="absolute z-20 w-full mt-2 bg-dark-700 border border-gray-600 rounded-xl p-4 text-center text-gray-500 text-sm">
                   Aucun résultat pour "{searchQuery}"
                 </div>
