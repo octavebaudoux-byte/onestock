@@ -63,12 +63,12 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, variant = 'defa
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Image section */}
-      <div className="relative h-48 bg-white/95 flex items-center justify-center overflow-hidden m-3 rounded-2xl">
+      <div className="relative h-52 bg-white/95 flex items-center justify-center overflow-hidden m-3 rounded-2xl">
         {sneaker.imageUrl ? (
           <img
             src={sneaker.imageUrl}
             alt={sneaker.name}
-            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
           <div className="text-6xl group-hover:scale-110 transition-transform duration-500">👟</div>
