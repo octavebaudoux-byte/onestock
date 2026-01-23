@@ -64,23 +64,29 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     setSearchResults([])
   }, [sneaker, isOpen, mode])
 
-  // Recherche avec debounce - API serveur ou locale
+  // Recherche avec debounce + AbortController pour éviter les race conditions
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([])
       setApiError(null)
+      setIsSearching(false)
       return
     }
 
-    // Recherche API avec debounce
     setIsSearching(true)
     setApiError(null)
 
+    const abortController = new AbortController()
+
     const timeoutId = setTimeout(async () => {
       try {
-        // Appel à notre route API serveur
-        const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`)
+        const response = await fetch(
+          `/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`,
+          { signal: abortController.signal }
+        )
         const data = await response.json()
+
+        if (abortController.signal.aborted) return
 
         if (response.ok && data.results?.length > 0) {
           setSearchResults(data.results)
@@ -93,15 +99,21 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
           setSearchResults(localResults)
         }
       } catch (err) {
+        if (err.name === 'AbortError') return
         console.error('Search error:', err)
         const localResults = searchSneakers(searchQuery)
         setSearchResults(localResults)
       } finally {
-        setIsSearching(false)
+        if (!abortController.signal.aborted) {
+          setIsSearching(false)
+        }
       }
-    }, 300) // Debounce de 300ms
+    }, 300)
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      clearTimeout(timeoutId)
+      abortController.abort()
+    }
   }, [searchQuery])
 
   const handleSelectSneaker = (result) => {
