@@ -63,30 +63,30 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, variant = 'defa
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Image section */}
-      <div className="relative h-48 bg-gradient-to-br from-dark-600 to-dark-700 flex items-center justify-center overflow-hidden">
+      <div className="relative h-48 bg-white/95 flex items-center justify-center overflow-hidden m-3 rounded-2xl">
         {sneaker.imageUrl ? (
           <img
             src={sneaker.imageUrl}
             alt={sneaker.name}
-            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
           <div className="text-6xl group-hover:scale-110 transition-transform duration-500">👟</div>
         )}
 
         {/* Status badge */}
-        <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold ${
-          sneaker.status === 'sold' ? 'bg-cyan-500/90 text-dark-900' : 'bg-blue-500/90 text-white'
+        <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold shadow-md ${
+          sneaker.status === 'sold' ? 'bg-cyan-500 text-dark-900' : 'bg-blue-500 text-white'
         }`}>
           {sneaker.status === 'sold' ? '✓ VENDU' : 'EN STOCK'}
         </div>
 
         {/* Actions overlay */}
-        <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(sneaker)} className="p-2 bg-dark-800/80 backdrop-blur-sm rounded-lg text-white hover:bg-blue-500 transition-colors">
+        <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => onEdit(sneaker)} className="p-2 bg-dark-800/90 backdrop-blur-sm rounded-lg text-white hover:bg-blue-500 transition-colors shadow-md">
             <Edit className="w-4 h-4" />
           </button>
-          <button onClick={() => onDelete(sneaker.id)} className="p-2 bg-dark-800/80 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors">
+          <button onClick={() => onDelete(sneaker.id)} className="p-2 bg-dark-800/90 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors shadow-md">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
