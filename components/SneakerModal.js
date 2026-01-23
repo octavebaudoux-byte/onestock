@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Search, FileText, Loader2, Wifi, WifiOff } from 'lucide-react'
+import { X, Search, FileText, Loader2 } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, CONDITIONS, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 
@@ -29,7 +29,6 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
-  const [useApi, setUseApi] = useState(false)
   const [apiError, setApiError] = useState(null)
 
   useEffect(() => {
@@ -70,7 +69,6 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     if (searchQuery.length < 2) {
       setSearchResults([])
       setApiError(null)
-      setUseApi(false)
       return
     }
 
@@ -86,25 +84,18 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
 
         if (response.ok && data.results?.length > 0) {
           setSearchResults(data.results)
-          setUseApi(true)
         } else if (data.error) {
           setApiError(data.error)
-          // Fallback sur la recherche locale
           const localResults = searchSneakers(searchQuery)
           setSearchResults(localResults)
-          setUseApi(false)
         } else {
-          // Pas de résultats API, essayer en local
           const localResults = searchSneakers(searchQuery)
           setSearchResults(localResults)
-          setUseApi(localResults.length === 0)
         }
       } catch (err) {
         console.error('Search error:', err)
-        // Fallback sur la recherche locale
         const localResults = searchSneakers(searchQuery)
         setSearchResults(localResults)
-        setUseApi(false)
       } finally {
         setIsSearching(false)
       }
@@ -195,24 +186,9 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
           {/* Search Section */}
           {(mode === 'add' || mode === 'sale') && (
             <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm text-gray-400">
-                  🔍 Rechercher une paire
-                </label>
-                <div className="flex items-center gap-2">
-                  {useApi ? (
-                    <span className="flex items-center gap-1 text-xs text-emerald-400">
-                      <Wifi className="w-3 h-3" />
-                      KicksDB API
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <WifiOff className="w-3 h-3" />
-                      Mode hors-ligne
-                    </span>
-                  )}
-                </div>
-              </div>
+              <label className="block text-sm text-gray-400 mb-2">
+                🔍 Rechercher une paire
+              </label>
               <div className="relative">
                 {isSearching ? (
                   <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 animate-spin" />
