@@ -64,7 +64,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     setSearchResults([])
   }, [sneaker, isOpen, mode])
 
-  // Recherche avec debounce - appel direct à KicksDB API
+  // Recherche avec debounce via API route (server-side pour éviter CORS)
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([])
@@ -79,47 +79,25 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     const abortController = new AbortController()
 
     const timeoutId = setTimeout(async () => {
-      const apiKey = process.env.NEXT_PUBLIC_KICKSDB_API_KEY
-
-      if (!apiKey) {
-        // Pas de clé API, utiliser la recherche locale
-        const localResults = searchSneakers(searchQuery)
-        if (!abortController.signal.aborted) {
-          setSearchResults(localResults)
-          setIsSearching(false)
-        }
-        return
-      }
-
       try {
         const response = await fetch(
-          `https://api.kicks.dev/v3/stockx/products?query=${encodeURIComponent(searchQuery)}&limit=20`,
-          {
-            headers: { 'Authorization': apiKey },
-            signal: abortController.signal,
-          }
+          `/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`,
+          { signal: abortController.signal }
         )
 
         if (abortController.signal.aborted) return
 
-        if (response.ok) {
-          const data = await response.json()
-          const results = (data.data || []).map(product => ({
-            id: product.id || product.slug,
-            name: product.title || product.name,
-            brand: product.brand || '',
-            sku: product.sku || '',
-            imageUrl: product.image || product.gallery?.[0] || '',
-            colorway: product.colorway || '',
-            lowestPrice: product.min_price || null,
-          }))
-          setSearchResults(results.length > 0 ? results : searchSneakers(searchQuery))
+        const data = await response.json()
+
+        if (response.ok && data.results?.length > 0) {
+          setSearchResults(data.results)
         } else {
+          // Fallback sur la recherche locale
           setSearchResults(searchSneakers(searchQuery))
         }
       } catch (err) {
         if (err.name === 'AbortError') return
-        console.error('Search error:', err)
+        // Fallback sur la recherche locale
         setSearchResults(searchSneakers(searchQuery))
       } finally {
         if (!abortController.signal.aborted) {
