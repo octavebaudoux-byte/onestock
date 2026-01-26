@@ -4,11 +4,15 @@
 const API_BASE_URL = 'https://api.kicks.dev/v3'
 
 export default async function handler(req, res) {
+  // Désactiver le cache pour éviter les résultats périmés
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const { query, limit = 20 } = req.query
+  console.log('[API Search] Query:', query, '| Limit:', limit)
 
   if (!query || query.length < 2) {
     return res.status(400).json({ error: 'Query too short', results: [] })
@@ -18,22 +22,18 @@ export default async function handler(req, res) {
   const apiKey = process.env.KICKSDB_API_KEY
 
   if (!apiKey) {
-    console.error('KICKSDB_API_KEY not configured')
+    console.error('[API Search] KICKSDB_API_KEY not configured!')
     return res.status(500).json({ error: 'API not configured', results: [] })
   }
 
   try {
-    const params = new URLSearchParams({
-      query: query,
-      limit: limit,
-      'display[variants]': 'true',
-    })
+    const url = `${API_BASE_URL}/stockx/products?query=${encodeURIComponent(query)}&limit=${limit}`
+    console.log('[API Search] Fetching:', url)
 
-    const response = await fetch(`${API_BASE_URL}/stockx/products?${params}`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': apiKey,
-        'Content-Type': 'application/json',
       },
     })
 
@@ -48,34 +48,26 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json()
+    console.log('[API Search] Got', (data.data || []).length, 'results from KicksDB')
+    if (data.data?.[0]) {
+      console.log('[API Search] First result:', data.data[0].title, '-', data.data[0].brand)
+    }
 
     // Transformer les données
-    const results = (data.data || data || []).map(product => ({
+    const results = (data.data || []).map(product => ({
       id: product.id || product.slug,
       name: product.title || product.name,
       brand: normalizeBrand(product.brand),
       sku: product.sku || '',
-      model: product.model || '',
       imageUrl: product.image || product.gallery?.[0] || '',
-      gallery: product.gallery || [],
       colorway: product.colorway || '',
-      retailPrice: product.retail_price || null,
       lowestPrice: product.min_price || null,
-      highestPrice: product.max_price || null,
-      avgPrice: product.avg_price || null,
-      variants: (product.variants || []).slice(0, 10).map(v => ({
-        size: v.size,
-        lowestAsk: v.lowest_ask,
-        currency: v.currency || 'EUR',
-      })),
     }))
 
-    // Cache de 5 minutes
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate')
     return res.status(200).json({ results, error: null })
 
   } catch (error) {
-    console.error('KicksDB API error:', error)
+    console.error('[API Search] Error:', error.message)
     return res.status(500).json({ error: 'NETWORK_ERROR', results: [] })
   }
 }
@@ -99,6 +91,10 @@ function normalizeBrand(brand) {
     'vans': 'Vans',
     'salomon': 'Salomon',
     'yeezy': 'Yeezy',
+    'ugg': 'UGG',
+    'saucony': 'Saucony',
+    'on': 'On Running',
+    'hoka': 'Hoka',
   }
 
   const lowerBrand = brand.toLowerCase().trim()

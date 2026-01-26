@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2 } from 'lucide-react'
-import { POPULAR_BRANDS, PLATFORMS, CONDITIONS, generateId, getSizesForBrand } from '../lib/store'
+import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, PAYMENT_STATUS, DELIVERY_STATUS, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
@@ -13,7 +13,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     condition: 'new',
     buyPrice: '',
     buyDate: new Date().toISOString().split('T')[0],
-    buyPlatform: 'StockX',
+    buyPlatform: 'SNKRS',
     status: 'stock',
     sellPrice: '',
     sellDate: '',
@@ -21,7 +21,9 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     fees: '',
     notes: '',
     imageUrl: '',
-    invoiceUrl: '', // URL de la facture
+    invoiceUrl: '',
+    paymentStatus: 'pending',
+    deliveryStatus: 'pending',
   })
 
   // Search state
@@ -49,8 +51,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         condition: 'new',
         buyPrice: '',
         buyDate: new Date().toISOString().split('T')[0],
-        buyPlatform: 'StockX',
-        status: mode === 'sale' ? 'sold' : 'stock', // Si mode vente, statut = sold
+        buyPlatform: 'SNKRS',
+        status: mode === 'sale' ? 'sold' : 'stock',
         sellPrice: '',
         sellDate: mode === 'sale' ? new Date().toISOString().split('T')[0] : '',
         sellPlatform: '',
@@ -58,6 +60,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         notes: '',
         imageUrl: '',
         invoiceUrl: '',
+        paymentStatus: 'pending',
+        deliveryStatus: 'pending',
       })
       setShowSearch(mode === 'add' || mode === 'sale')
     }
@@ -69,8 +73,10 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   useEffect(() => {
     latestQueryRef.current = searchQuery
 
+    // Toujours effacer les anciens résultats quand la query change
+    setSearchResults([])
+
     if (searchQuery.length < 3) {
-      setSearchResults([])
       setApiError(null)
       setIsSearching(false)
       return
@@ -429,14 +435,14 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Plateforme</label>
+                <label className="block text-sm text-gray-400 mb-2">Plateforme d'achat</label>
                 <select
                   name="buyPlatform"
                   value={formData.buyPlatform}
                   onChange={handleChange}
                   className="w-full"
                 >
-                  {PLATFORMS.map(p => (
+                  {BUY_PLATFORMS.map(p => (
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
@@ -510,7 +516,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Plateforme</label>
+                    <label className="block text-sm text-gray-400 mb-2">Plateforme de vente</label>
                     <select
                       name="sellPlatform"
                       value={formData.sellPlatform}
@@ -520,6 +526,36 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                       <option value="">Sélectionner</option>
                       {PLATFORMS.map(p => (
                         <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Statuts paiement et livraison */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Paiement</label>
+                    <select
+                      name="paymentStatus"
+                      value={formData.paymentStatus}
+                      onChange={handleChange}
+                      className="w-full"
+                    >
+                      {PAYMENT_STATUS.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Livraison</label>
+                    <select
+                      name="deliveryStatus"
+                      value={formData.deliveryStatus}
+                      onChange={handleChange}
+                      className="w-full"
+                    >
+                      {DELIVERY_STATUS.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>
                   </div>
