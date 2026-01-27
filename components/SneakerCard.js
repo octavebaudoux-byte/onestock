@@ -37,11 +37,27 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, variant = 'defa
 
           {/* Status & Actions */}
           <div className="flex flex-col items-end justify-between">
-            <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
-              sneaker.status === 'sold' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-500/20 text-blue-400'
-            }`}>
-              {sneaker.status === 'sold' ? 'Vendu' : 'Stock'}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                sneaker.status === 'sold' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-500/20 text-blue-400'
+              }`}>
+                {sneaker.status === 'sold' ? 'Vendu' : 'Stock'}
+              </span>
+              {sneaker.status === 'sold' && (
+                <div className="flex gap-1">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                    sneaker.paymentStatus === 'received' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'
+                  }`}>
+                    {sneaker.paymentStatus === 'received' ? '💰' : '⏳'}
+                  </span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                    sneaker.deliveryStatus === 'delivered' ? 'bg-emerald-500/20 text-emerald-400' : sneaker.deliveryStatus === 'shipped' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400'
+                  }`}>
+                    {sneaker.deliveryStatus === 'delivered' ? '✅' : sneaker.deliveryStatus === 'shipped' ? '📦' : '📤'}
+                  </span>
+                </div>
+              )}
+            </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => onEdit(sneaker)} className="p-1.5 hover:bg-dark-600 rounded-lg text-gray-400 hover:text-white">
                 <Edit className="w-4 h-4" />
@@ -128,6 +144,28 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, variant = 'defa
             <div className="text-xs uppercase tracking-wider mb-1 text-gray-400">Profit Net</div>
             <div className={`text-3xl font-black ${profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
               {profit >= 0 ? '+' : ''}{formatPrice(profit)}
+            </div>
+          </div>
+        )}
+
+        {/* Payment & Delivery status for sold items */}
+        {sneaker.status === 'sold' && (
+          <div className="flex gap-2 mt-3">
+            <div className={`flex-1 text-center py-2 px-3 rounded-lg text-xs font-medium ${
+              sneaker.paymentStatus === 'received'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-yellow-500/20 text-yellow-400'
+            }`}>
+              {sneaker.paymentStatus === 'received' ? '💰 Paiement reçu' : '⏳ Paiement en attente'}
+            </div>
+            <div className={`flex-1 text-center py-2 px-3 rounded-lg text-xs font-medium ${
+              sneaker.deliveryStatus === 'delivered'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : sneaker.deliveryStatus === 'shipped'
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'bg-yellow-500/20 text-yellow-400'
+            }`}>
+              {sneaker.deliveryStatus === 'delivered' ? '✅ Livré' : sneaker.deliveryStatus === 'shipped' ? '📦 Expédié' : '📤 À expédier'}
             </div>
           </div>
         )}
