@@ -172,9 +172,20 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, variant = 'defa
 
         {/* In stock indicator */}
         {sneaker.status === 'stock' && (
-          <div className="rounded-xl p-4 text-center bg-blue-500/10 border border-blue-500/20">
-            <div className="text-sm text-blue-300">En attente de vente</div>
-            <div className="text-xs text-gray-500 mt-1">Valeur: {formatPrice(sneaker.buyPrice)}</div>
+          <div className="space-y-2">
+            <div className={`rounded-xl p-3 text-center ${
+              sneaker.itemReceived
+                ? 'bg-emerald-500/10 border border-emerald-500/20'
+                : 'bg-yellow-500/10 border border-yellow-500/20'
+            }`}>
+              <div className={`text-sm font-medium ${sneaker.itemReceived ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                {sneaker.itemReceived ? '✅ Article reçu' : '📦 En attente de livraison'}
+              </div>
+            </div>
+            <div className="rounded-xl p-3 text-center bg-blue-500/10 border border-blue-500/20">
+              <div className="text-xs text-gray-500">Valeur stock</div>
+              <div className="text-sm font-medium text-blue-300">{formatPrice(sneaker.buyPrice)}</div>
+            </div>
           </div>
         )}
       </div>

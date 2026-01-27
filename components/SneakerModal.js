@@ -15,6 +15,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     buyDate: new Date().toISOString().split('T')[0],
     buyPlatform: 'SNKRS',
     status: 'stock',
+    itemReceived: false,
     sellPrice: '',
     sellDate: '',
     sellPlatform: '',
@@ -53,6 +54,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         buyDate: new Date().toISOString().split('T')[0],
         buyPlatform: 'SNKRS',
         status: mode === 'sale' ? 'sold' : 'stock',
+        itemReceived: false,
         sellPrice: '',
         sellDate: mode === 'sale' ? new Date().toISOString().split('T')[0] : '',
         sellPlatform: '',
@@ -448,6 +450,34 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 </select>
               </div>
             </div>
+
+            {/* Toggle Article reçu - uniquement en mode add */}
+            {mode === 'add' && (
+              <div
+                onClick={() => setFormData(prev => ({ ...prev, itemReceived: !prev.itemReceived }))}
+                className={`cursor-pointer p-4 rounded-xl border-2 transition-all mt-4 ${
+                  formData.itemReceived
+                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                    : 'bg-dark-600/50 border-gray-600 text-gray-400 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{formData.itemReceived ? '✅' : '📦'}</span>
+                    <div className="font-medium">
+                      {formData.itemReceived ? 'Article reçu' : 'En attente de livraison'}
+                    </div>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                    formData.itemReceived ? 'bg-emerald-500' : 'bg-gray-600'
+                  }`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                      formData.itemReceived ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section Vente - masquée en mode 'add' */}
