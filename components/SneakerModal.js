@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2 } from 'lucide-react'
-import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, PAYMENT_STATUS, DELIVERY_STATUS, generateId, getSizesForBrand } from '../lib/store'
+import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
@@ -450,11 +450,12 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
             </div>
           </div>
 
-          {/* Section Vente */}
+          {/* Section Vente - masquée en mode 'add' */}
+          {mode !== 'add' && (
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-lg font-medium mb-4 flex items-center gap-3">
               <span className="text-blue-400">Vente</span>
-              {(mode === 'edit' || mode === 'add') && (
+              {mode === 'edit' && (
                 <label className="flex items-center gap-2 text-sm font-normal">
                   <input
                     type="checkbox"
@@ -530,33 +531,51 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                   </div>
                 </div>
 
-                {/* Statuts paiement et livraison */}
+                {/* Statuts paiement et livraison - Toggles */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Paiement</label>
-                    <select
-                      name="paymentStatus"
-                      value={formData.paymentStatus}
-                      onChange={handleChange}
-                      className="w-full"
-                    >
-                      {PAYMENT_STATUS.map(s => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, paymentStatus: prev.paymentStatus === 'received' ? 'pending' : 'received' }))}
+                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
+                      formData.paymentStatus === 'received'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                        : 'bg-dark-600/50 border-gray-600 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">{formData.paymentStatus === 'received' ? '💰' : '⏳'}</span>
+                      <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                        formData.paymentStatus === 'received' ? 'bg-emerald-500' : 'bg-gray-600'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                          formData.paymentStatus === 'received' ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
+                    <div className="mt-2 font-medium">
+                      {formData.paymentStatus === 'received' ? 'Paiement reçu' : 'Paiement en attente'}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Livraison</label>
-                    <select
-                      name="deliveryStatus"
-                      value={formData.deliveryStatus}
-                      onChange={handleChange}
-                      className="w-full"
-                    >
-                      {DELIVERY_STATUS.map(s => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, deliveryStatus: prev.deliveryStatus === 'delivered' ? 'pending' : 'delivered' }))}
+                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
+                      formData.deliveryStatus === 'delivered'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                        : 'bg-dark-600/50 border-gray-600 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">{formData.deliveryStatus === 'delivered' ? '✅' : '📦'}</span>
+                      <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                        formData.deliveryStatus === 'delivered' ? 'bg-emerald-500' : 'bg-gray-600'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                          formData.deliveryStatus === 'delivered' ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
+                    <div className="mt-2 font-medium">
+                      {formData.deliveryStatus === 'delivered' ? 'Colis livré' : 'Colis en attente'}
+                    </div>
                   </div>
                 </div>
 
@@ -604,6 +623,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
               </div>
             )}
           </div>
+          )}
 
           {/* Notes */}
           <div>
