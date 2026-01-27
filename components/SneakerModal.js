@@ -450,12 +450,11 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
             </div>
           </div>
 
-          {/* Section Vente - masquée en mode 'add' */}
-          {mode !== 'add' && (
+          {/* Section Vente */}
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-lg font-medium mb-4 flex items-center gap-3">
               <span className="text-blue-400">Vente</span>
-              {mode === 'edit' && (
+              {(mode === 'edit' || mode === 'add') && (
                 <label className="flex items-center gap-2 text-sm font-normal">
                   <input
                     type="checkbox"
@@ -605,7 +604,6 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
               </div>
             )}
           </div>
-          )}
 
           {/* Notes */}
           <div>
