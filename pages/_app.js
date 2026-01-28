@@ -1,13 +1,13 @@
 import '../styles/globals.css'
-import { AuthProvider } from '../contexts/AuthContext'
+import { WhopAuthProvider } from '../contexts/WhopAuthContext'
 import { ThemeProvider } from '../contexts/ThemeContext'
 
 export default function App({ Component, pageProps }) {
   return (
     <ThemeProvider>
-      <AuthProvider>
+      <WhopAuthProvider>
         <Component {...pageProps} />
-      </AuthProvider>
+      </WhopAuthProvider>
     </ThemeProvider>
   )
 }

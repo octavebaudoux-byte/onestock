@@ -1,62 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react'
-import { signIn, signUp, getSession, isSupabaseConfigured } from '../lib/supabase'
+import { Loader2, AlertCircle, ExternalLink } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
 
-  // Vérifier si déjà connecté
+  // Check for errors in URL
   useEffect(() => {
-    async function checkAuth() {
-      if (!isSupabaseConfigured()) {
-        // Si Supabase n'est pas configuré, rediriger vers le dashboard
-        router.push('/')
-        return
+    const { error: urlError } = router.query
+    if (urlError) {
+      const errorMessages = {
+        no_code: 'Code d\'autorisation manquant',
+        token_failed: 'Échec de l\'authentification',
+        no_membership: 'Tu n\'as pas d\'abonnement actif pour OneStock',
+        callback_failed: 'Erreur lors de la connexion',
       }
-
-      const { session } = await getSession()
-      if (session) {
-        router.push('/')
-      } else {
-        setCheckingAuth(false)
-      }
+      setError(errorMessages[urlError] || 'Une erreur est survenue')
     }
-    checkAuth()
+  }, [router.query])
+
+  // Check if already logged in
+  useEffect(() => {
+    // Check for whop_user cookie
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=')
+      acc[key] = value
+      return acc
+    }, {})
+
+    if (cookies.whop_user) {
+      router.push('/')
+    } else {
+      setCheckingAuth(false)
+    }
   }, [router])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-    setLoading(true)
-
-    try {
-      if (isLogin) {
-        // Connexion
-        const { data, error } = await signIn(email, password)
-        if (error) throw error
-        router.push('/')
-      } else {
-        // Inscription
-        const { data, error } = await signUp(email, password)
-        if (error) throw error
-        setSuccess('Compte créé ! Vérifie ton email pour confirmer.')
-        setIsLogin(true)
-      }
-    } catch (err) {
-      setError(err.message || 'Une erreur est survenue')
-    } finally {
-      setLoading(false)
-    }
+  const handleWhopLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_WHOP_CLIENT_ID
+    const redirectUri = `${window.location.origin}/api/auth/whop/callback`
+    window.location.href = `https://whop.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`
   }
 
   if (checkingAuth) {
@@ -70,7 +55,7 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>{isLogin ? 'Connexion' : 'Inscription'} - OneStock</title>
+        <title>Connexion - OneStock</title>
       </Head>
 
       <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
@@ -89,98 +74,46 @@ export default function LoginPage() {
           {/* Card */}
           <div className="card p-8">
             <h2 className="text-2xl font-semibold text-center mb-6">
-              {isLogin ? 'Connexion' : 'Créer un compte'}
+              Accéder à OneStock
             </h2>
 
             {/* Error message */}
             {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400">
+              <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm">{error}</span>
               </div>
             )}
 
-            {/* Success message */}
-            {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm">
-                {success}
-              </div>
-            )}
+            {/* Whop Login Button */}
+            <button
+              onClick={handleWhopLogin}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02]"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+              Se connecter avec Whop
+            </button>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ton@email.com"
-                    required
-                    className="w-full pl-10"
-                  />
-                </div>
-              </div>
+            <p className="text-center text-gray-500 text-sm mt-4">
+              Tu dois avoir un abonnement actif sur Whop pour accéder à OneStock
+            </p>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Mot de passe</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                    className="w-full pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full btn btn-primary py-3 flex items-center justify-center gap-2"
+            {/* Buy link */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <p className="text-center text-gray-400 text-sm mb-3">
+                Pas encore d'abonnement ?
+              </p>
+              <a
+                href="https://whop.com/onestock"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full btn btn-secondary py-3 flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {isLogin ? 'Connexion...' : 'Création...'}
-                  </>
-                ) : (
-                  isLogin ? 'Se connecter' : 'Créer mon compte'
-                )}
-              </button>
-            </form>
-
-            {/* Toggle */}
-            <div className="mt-6 text-center text-sm text-gray-400">
-              {isLogin ? (
-                <>
-                  Pas encore de compte ?{' '}
-                  <button
-                    onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    Créer un compte
-                  </button>
-                </>
-              ) : (
-                <>
-                  Déjà un compte ?{' '}
-                  <button
-                    onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    Se connecter
-                  </button>
-                </>
-              )}
+                Acheter OneStock
+                <ExternalLink className="w-4 h-4" />
+              </a>
             </div>
           </div>
 
