@@ -39,20 +39,31 @@ export function WhopAuthProvider({ children }) {
   }
 
   useEffect(() => {
-    // Redirect logic
-    if (!loading) {
+    // Redirect logic - only run once when loading is done
+    if (!loading && router.isReady) {
       const isPublicRoute = publicRoutes.includes(router.pathname)
 
       if (!user && !isPublicRoute) {
-        router.push('/login')
+        router.replace('/login')
       } else if (user && router.pathname === '/login') {
-        router.push('/')
+        router.replace('/')
       }
     }
-  }, [user, loading, router.pathname])
+  }, [user, loading, router.isReady])
 
   const logout = () => {
     window.location.href = '/api/auth/logout'
+  }
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <WhopAuthContext.Provider value={{ user, loading, logout, isAuthenticated: !!user }}>
+        <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </WhopAuthContext.Provider>
+    )
   }
 
   return (
