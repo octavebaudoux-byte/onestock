@@ -249,7 +249,7 @@ export default function Dashboard() {
             </div>
 
             {recentSneakers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="flex flex-wrap gap-4">
                 {recentSneakers.map((sneaker, index) => (
                   <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${500 + index * 100}ms` }}>
                     <SneakerCard
@@ -288,14 +288,13 @@ export default function Dashboard() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-wrap gap-4">
                 {recentSales.map((sneaker, index) => (
                   <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${700 + index * 100}ms` }}>
                     <SneakerCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
-                      variant="compact"
                     />
                   </div>
                 ))}

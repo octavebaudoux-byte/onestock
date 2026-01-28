@@ -197,7 +197,7 @@ export default function Inventory() {
 
           {/* Grid */}
           {filteredSneakers.length > 0 ? (
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-4">
               {filteredSneakers.map(sneaker => (
                 <SneakerCard
                   key={sneaker.id}

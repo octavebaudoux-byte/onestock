@@ -39,6 +39,10 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     if (sneaker) {
       setFormData({
         ...sneaker,
+        status: sneaker.status || 'stock',
+        itemReceived: sneaker.itemReceived ?? false,
+        paymentStatus: sneaker.paymentStatus || 'pending',
+        deliveryStatus: sneaker.deliveryStatus || 'pending',
         buyDate: sneaker.buyDate?.split('T')[0] || '',
         sellDate: sneaker.sellDate?.split('T')[0] || '',
         invoiceUrl: sneaker.invoiceUrl || '',
@@ -451,25 +455,25 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
               </div>
             </div>
 
-            {/* Toggle Article reçu - uniquement en mode add */}
-            {mode === 'add' && (
+            {/* Toggle Livraison - en mode add ou edit (si en stock) */}
+            {(mode === 'add' || (mode === 'edit' && formData.status === 'stock')) && (
               <div
                 onClick={() => setFormData(prev => ({ ...prev, itemReceived: !prev.itemReceived }))}
                 className={`cursor-pointer p-4 rounded-xl border-2 transition-all mt-4 ${
                   formData.itemReceived
                     ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                    : 'bg-dark-600/50 border-gray-600 text-gray-400 hover:border-gray-500'
+                    : 'bg-amber-500/20 border-amber-500 text-amber-400'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{formData.itemReceived ? '✅' : '📦'}</span>
+                    <span className="text-2xl">{formData.itemReceived ? '✅' : '🚚'}</span>
                     <div className="font-medium">
-                      {formData.itemReceived ? 'Article reçu' : 'En attente de livraison'}
+                      {formData.itemReceived ? 'Livré' : 'En cours de livraison'}
                     </div>
                   </div>
                   <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                    formData.itemReceived ? 'bg-emerald-500' : 'bg-gray-600'
+                    formData.itemReceived ? 'bg-emerald-500' : 'bg-amber-500'
                   }`}>
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
                       formData.itemReceived ? 'translate-x-6' : 'translate-x-0'

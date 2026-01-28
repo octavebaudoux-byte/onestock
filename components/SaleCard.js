@@ -1,4 +1,4 @@
-import { Edit, Trash2, ArrowRight } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 import { formatPrice } from '../lib/store'
 
 export default function SaleCard({ sneaker, onEdit, onDelete }) {
@@ -7,99 +7,68 @@ export default function SaleCard({ sneaker, onEdit, onDelete }) {
 
   const formatSellDate = (date) => {
     if (!date) return ''
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    })
+    return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
   }
 
   return (
-    <div className="group relative bg-gradient-to-br from-dark-700 via-dark-800 to-dark-900 border border-blue-500/20 rounded-2xl overflow-hidden hover:border-cyan-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
-      <div className="flex">
-        {/* Image */}
-        <div className="relative w-32 h-32 bg-gradient-to-br from-dark-600 to-dark-700 flex items-center justify-center flex-shrink-0">
-          {sneaker.imageUrl ? (
-            <img
-              src={sneaker.imageUrl}
-              alt={sneaker.name}
-              className="w-full h-full object-contain p-2"
-            />
-          ) : (
-            <div className="text-5xl">👟</div>
-          )}
-          {/* Badge vendu */}
-          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/90 text-dark-900">
-            VENDU
+    <div className="group relative bg-dark-800 border border-cyan-500/30 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all w-full max-w-[220px]">
+      {/* Image */}
+      <div className="relative aspect-square bg-white flex items-center justify-center">
+        {sneaker.imageUrl ? (
+          <img
+            src={sneaker.imageUrl}
+            alt={sneaker.name}
+            className="w-full h-full object-contain p-2"
+          />
+        ) : (
+          <div className="text-4xl">👟</div>
+        )}
+
+        {/* Badge */}
+        <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500 text-black">
+          VENDU
+        </div>
+
+        {/* Actions */}
+        <div className="absolute top-1 left-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => onEdit(sneaker)} className="p-1 bg-black/70 rounded text-white hover:bg-blue-500 text-xs">
+            <Edit className="w-3 h-3" />
+          </button>
+          <button onClick={() => onDelete(sneaker.id)} className="p-1 bg-black/70 rounded text-white hover:bg-red-500 text-xs">
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-2">
+        <h3 className="text-xs font-medium text-white truncate">{sneaker.name}</h3>
+        <p className="text-[10px] text-gray-400">{sneaker.size} • {formatSellDate(sneaker.sellDate)}</p>
+
+        {/* Profit */}
+        <div className={`mt-1.5 py-1.5 rounded text-center ${
+          profit >= 0 ? 'bg-cyan-500/20' : 'bg-red-500/20'
+        }`}>
+          <div className={`text-sm font-bold ${profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+            {profit >= 0 ? '+' : ''}{formatPrice(profit)}
+          </div>
+          <div className={`text-[9px] ${profit >= 0 ? 'text-cyan-400/70' : 'text-red-400/70'}`}>
+            {roi >= 0 ? '+' : ''}{roi.toFixed(0)}% ROI
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 p-4 flex flex-col justify-between">
-          <div>
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                  {sneaker.name}
-                </h3>
-                <p className="text-sm text-blue-300/60">
-                  {sneaker.brand} • Taille {sneaker.size}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => onEdit(sneaker)}
-                  className="p-1.5 bg-dark-600/80 rounded-lg text-gray-400 hover:text-white hover:bg-blue-500 transition-colors"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => onDelete(sneaker.id)}
-                  className="p-1.5 bg-dark-600/80 rounded-lg text-gray-400 hover:text-white hover:bg-red-500 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Date & Plateforme */}
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-              {sneaker.sellDate && <span>{formatSellDate(sneaker.sellDate)}</span>}
-              {sneaker.sellPlatform && (
-                <>
-                  <span>•</span>
-                  <span className="text-blue-400/70">{sneaker.sellPlatform}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Prix et Profit */}
-          <div className="flex items-center justify-between mt-3">
-            {/* Prix achat → vente */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400">{formatPrice(sneaker.buyPrice)}</span>
-              <ArrowRight className="w-4 h-4 text-blue-500" />
-              <span className="text-cyan-400 font-semibold">{formatPrice(sneaker.sellPrice)}</span>
-            </div>
-
-            {/* Profit */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${
-              profit >= 0
-                ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30'
-                : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30'
-            }`}>
-              <span className={`text-lg font-bold ${profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-                {profit >= 0 ? '+' : ''}{formatPrice(profit)}
-              </span>
-              <span className={`text-xs font-medium ${profit >= 0 ? 'text-cyan-400/70' : 'text-red-400/70'}`}>
-                ({roi >= 0 ? '+' : ''}{roi.toFixed(0)}%)
-              </span>
-            </div>
-          </div>
+        {/* Statuts */}
+        <div className="flex gap-1 mt-1.5">
+          <span className={`flex-1 text-center py-0.5 rounded text-[9px] ${
+            sneaker.paymentStatus === 'received' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'
+          }`}>
+            {sneaker.paymentStatus === 'received' ? '💰' : '⏳'}
+          </span>
+          <span className={`flex-1 text-center py-0.5 rounded text-[9px] ${
+            sneaker.deliveryStatus === 'delivered' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'
+          }`}>
+            {sneaker.deliveryStatus === 'delivered' ? '✅' : '📦'}
+          </span>
         </div>
       </div>
     </div>

@@ -259,20 +259,22 @@ export default function Sales() {
 
           {/* Sales list avec les nouvelles cards */}
           {sales.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-white">Historique des ventes</h2>
                 <span className="text-sm text-gray-500">{sales.length} vente{sales.length > 1 ? 's' : ''}</span>
               </div>
-              {sales.map((sneaker, index) => (
-                <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${index * 50}ms` }}>
-                  <SaleCard
-                    sneaker={sneaker}
-                    onEdit={handleEditSneaker}
-                    onDelete={handleDeleteSneaker}
-                  />
-                </div>
-              ))}
+              <div className="flex flex-wrap gap-4">
+                {sales.map((sneaker, index) => (
+                  <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${index * 50}ms` }}>
+                    <SaleCard
+                      sneaker={sneaker}
+                      onEdit={handleEditSneaker}
+                      onDelete={handleDeleteSneaker}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="card text-center py-16">
