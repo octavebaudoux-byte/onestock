@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Loader2, AlertCircle, Mail, ExternalLink } from 'lucide-react'
+import Logo from '../components/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -68,14 +69,9 @@ export default function LoginPage() {
       <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
-              <span className="text-5xl">👟</span>
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                OneStock
-              </span>
-            </h1>
-            <p className="text-gray-400 mt-2">Gestion de stock sneakers</p>
+          <div className="flex flex-col items-center mb-8">
+            <Logo size="xl" />
+            <p className="text-gray-400 mt-3">Gestion de stock sneakers</p>
           </div>
 
           {/* Card */}

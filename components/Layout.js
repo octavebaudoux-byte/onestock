@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import Logo from './Logo'
 import {
   LayoutDashboard,
   Package,
@@ -8,7 +9,8 @@ import {
   Plus,
   DollarSign,
   Download,
-  Settings
+  Settings,
+  CreditCard
 } from 'lucide-react'
 
 export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick }) {
@@ -18,6 +20,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/inventory', icon: Package, label: 'Inventaire' },
     { href: '/sales', icon: ShoppingBag, label: 'Ventes' },
+    { href: '/expenses', icon: CreditCard, label: 'Dépenses' },
     { href: '/stats', icon: TrendingUp, label: 'Stats' },
     { href: '/settings', icon: Settings, label: 'Paramètres' },
   ]
@@ -28,12 +31,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
       <aside className="hidden md:flex w-64 bg-dark-800 border-r border-blue-500/20 flex-col fixed inset-y-0 left-0 z-30">
         {/* Logo */}
         <div className="p-6 border-b border-blue-500/20">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="text-3xl">👟</span>
-            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              OneStock
-            </span>
-          </h1>
+          <Logo size="md" />
         </div>
 
         {/* Navigation */}

@@ -7,15 +7,21 @@ import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
 import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
+import { useExpenses } from '../hooks/useExpenses'
 
 export default function Dashboard() {
-  const { sneakers, loading, save, remove } = useData()
+  const { sneakers, loading, save, update, remove } = useData()
+  const { expenses } = useExpenses()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
   const [animatedStats, setAnimatedStats] = useState({ profit: 0, stock: 0, sold: 0, value: 0 })
 
   const stats = calculateStats(sneakers)
+
+  // Calcul des dépenses totales
+  const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+  const netProfit = stats.totalProfit - totalExpenses
 
   // Animation des stats au chargement
   useEffect(() => {
@@ -60,6 +66,10 @@ export default function Dashboard() {
     setEditingSneaker(sneaker)
     setModalMode('edit')
     setIsModalOpen(true)
+  }
+
+  const handleToggle = async (id, updates) => {
+    await update(id, updates)
   }
 
   const openAddModal = () => {
@@ -171,35 +181,37 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            {/* Profit total - Lien vers ventes */}
+            {/* Profit net (profit - dépenses) - Lien vers ventes */}
             <Link href="/sales" className={`group relative border rounded-2xl p-6 transition-all duration-500 hover:shadow-lg animate-slideUp cursor-pointer ${
-              stats.totalProfit >= 0
+              netProfit >= 0
                 ? 'bg-gradient-to-br from-cyan-500/10 to-emerald-600/20 border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-cyan-500/20'
                 : 'bg-gradient-to-br from-red-500/10 to-orange-600/20 border-red-500/30 hover:border-red-400/50 hover:shadow-red-500/20'
             }`} style={{ animationDelay: '200ms' }}>
               <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl transition-all ${
-                stats.totalProfit >= 0 ? 'bg-cyan-500/10 group-hover:bg-cyan-500/20' : 'bg-red-500/10 group-hover:bg-red-500/20'
+                netProfit >= 0 ? 'bg-cyan-500/10 group-hover:bg-cyan-500/20' : 'bg-red-500/10 group-hover:bg-red-500/20'
               }`} />
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowUpRight className={`w-4 h-4 ${stats.totalProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`} />
+                <ArrowUpRight className={`w-4 h-4 ${netProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`} />
               </div>
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl">{stats.totalProfit >= 0 ? '📈' : '📉'}</span>
-                  <TrendingUp className={`w-5 h-5 ${stats.totalProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`} />
+                  <span className="text-3xl">{netProfit >= 0 ? '📈' : '📉'}</span>
+                  <TrendingUp className={`w-5 h-5 ${netProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`} />
                 </div>
-                <div className={`text-4xl font-black mb-1 ${stats.totalProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-                  {stats.totalProfit >= 0 ? '+' : ''}{formatPrice(animatedStats.profit || stats.totalProfit)}
+                <div className={`text-4xl font-black mb-1 ${netProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                  {netProfit >= 0 ? '+' : ''}{formatPrice(netProfit)}
                 </div>
-                <div className={`text-sm ${stats.totalProfit >= 0 ? 'text-cyan-300/70' : 'text-red-300/70'}`}>Profit total</div>
+                <div className={`text-sm ${netProfit >= 0 ? 'text-cyan-300/70' : 'text-red-300/70'}`}>Profit net</div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className={`text-xs ${stats.totalProfit >= 0 ? 'text-cyan-400/60' : 'text-red-400/60'}`}>{animatedStats.sold || stats.soldCount} ventes</span>
+                  <span className={`text-xs ${netProfit >= 0 ? 'text-cyan-400/60' : 'text-red-400/60'}`}>
+                    {animatedStats.sold || stats.soldCount} ventes{totalExpenses > 0 ? ` • -${formatPrice(totalExpenses)} frais` : ''}
+                  </span>
                   {stats.totalSold > 0 && (
                     <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      stats.totalProfit >= 0 ? 'text-cyan-400 bg-cyan-500/20' : 'text-red-400 bg-red-500/20'
+                      netProfit >= 0 ? 'text-cyan-400 bg-cyan-500/20' : 'text-red-400 bg-red-500/20'
                     }`}>
                       <Percent className="w-3 h-3" />
-                      {stats.totalSold > 0 ? (stats.totalProfit >= 0 ? '+' : '') + Math.round((stats.totalProfit / stats.totalSold) * 100) : 0}% ROI
+                      {stats.totalSold > 0 ? (netProfit >= 0 ? '+' : '') + Math.round((netProfit / stats.totalSold) * 100) : 0}% ROI
                     </span>
                   )}
                 </div>
@@ -256,6 +268,7 @@ export default function Dashboard() {
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
+                      onToggle={handleToggle}
                     />
                   </div>
                 ))}
@@ -295,6 +308,7 @@ export default function Dashboard() {
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
+                      onToggle={handleToggle}
                     />
                   </div>
                 ))}

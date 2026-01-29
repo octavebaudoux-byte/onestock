@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2 } from 'lucide-react'
-import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, generateId, getSizesForBrand } from '../lib/store'
+import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
   // mode peut être: 'add' (inventaire), 'sale' (vente directe), 'edit'
   const [formData, setFormData] = useState({
     name: '',
+    category: 'sneakers',
     brand: '',
     sku: '',
     size: '42',
@@ -39,6 +40,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     if (sneaker) {
       setFormData({
         ...sneaker,
+        category: sneaker.category || 'sneakers',
         status: sneaker.status || 'stock',
         itemReceived: sneaker.itemReceived ?? false,
         paymentStatus: sneaker.paymentStatus || 'pending',
@@ -50,6 +52,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     } else {
       setFormData({
         name: '',
+        category: 'sneakers',
         brand: '',
         sku: '',
         size: '42',
@@ -365,8 +368,28 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
             </div>
           </div>
 
-          {/* Marque et Taille */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Catégorie, Marque et Taille */}
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Catégorie</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={(e) => {
+                  const cat = e.target.value
+                  setFormData(prev => ({
+                    ...prev,
+                    category: cat,
+                    size: cat === 'clothing' ? 'M' : '42',
+                  }))
+                }}
+                className="w-full"
+              >
+                {CATEGORIES.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm text-gray-400 mb-2">Marque *</label>
               <select
@@ -391,7 +414,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 required
                 className="w-full"
               >
-                {getSizesForBrand(formData.brand).map(size => (
+                {getSizesForBrand(formData.brand, formData.category).map(size => (
                   <option key={size} value={size}>{size}</option>
                 ))}
               </select>

@@ -8,7 +8,7 @@ import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 
 export default function Inventory() {
-  const { sneakers, loading, save, remove } = useData()
+  const { sneakers, loading, save, update, remove } = useData()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
@@ -85,6 +85,10 @@ export default function Inventory() {
     setEditingSneaker(sneaker)
     setModalMode('edit')
     setIsModalOpen(true)
+  }
+
+  const handleToggle = async (id, updates) => {
+    await update(id, updates)
   }
 
   const openAddModal = () => {
@@ -204,6 +208,7 @@ export default function Inventory() {
                   sneaker={sneaker}
                   onEdit={handleEditSneaker}
                   onDelete={handleDeleteSneaker}
+                  onToggle={handleToggle}
                 />
               ))}
             </div>

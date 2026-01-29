@@ -257,3 +257,43 @@ input::placeholder {
 .glow-blue {
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
+
+/* Logo animations */
+@keyframes logoPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.animate-logo-pulse {
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes sneakerDraw {
+  0% { stroke-dasharray: 200; stroke-dashoffset: 200; }
+  100% { stroke-dasharray: 200; stroke-dashoffset: 0; }
+}
+
+.animate-sneaker-draw {
+  animation: sneakerDraw 1.5s ease-out forwards;
+}
+
+@keyframes swoosh {
+  0% { stroke-dasharray: 60; stroke-dashoffset: 60; opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { stroke-dasharray: 60; stroke-dashoffset: 0; opacity: 0.8; }
+}
+
+.animate-swoosh {
+  animation: swoosh 1s ease-out 0.8s forwards;
+  opacity: 0;
+}
+
+@keyframes dotPop {
+  0% { r: 0; opacity: 0; }
+  50% { r: 2.5; }
+  100% { r: 1.5; opacity: 1; }
+}
+
+.animate-dot-1 { animation: dotPop 0.3s ease-out 1.2s forwards; opacity: 0; }
+.animate-dot-2 { animation: dotPop 0.3s ease-out 1.4s forwards; opacity: 0; }
+.animate-dot-3 { animation: dotPop 0.3s ease-out 1.6s forwards; opacity: 0; }
