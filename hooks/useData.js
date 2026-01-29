@@ -14,11 +14,40 @@ export function useData() {
   const userId = user?.email || null
   const useCloud = isSupabaseConfigured() && !!userId
 
+  // Migration localStorage → Supabase
+  const migrateToCloud = useCallback(async () => {
+    if (!useCloud) return
+
+    const localData = loadData()
+    const localSneakers = localData.sneakers || []
+
+    if (localSneakers.length === 0) return
+
+    console.log(`[Migration] ${localSneakers.length} paires trouvées en local, migration vers Supabase...`)
+
+    // Migrer chaque paire vers Supabase
+    for (const sneaker of localSneakers) {
+      try {
+        await addSneaker(userId, sneaker)
+        console.log(`[Migration] ✓ ${sneaker.name}`)
+      } catch (error) {
+        console.error(`[Migration] ✗ ${sneaker.name}:`, error)
+      }
+    }
+
+    // Vider localStorage après migration réussie
+    saveData({ sneakers: [], sales: [], expenses: [], settings: localData.settings })
+    console.log('[Migration] Migration terminée, localStorage vidé')
+  }, [userId, useCloud])
+
   // Charger les données
   const load = useCallback(async () => {
     setLoading(true)
 
     if (useCloud) {
+      // Vérifier s'il faut migrer depuis localStorage
+      await migrateToCloud()
+
       // Mode Supabase
       const data = await loadSneakers(userId)
       setSneakers(data)
@@ -29,7 +58,7 @@ export function useData() {
     }
 
     setLoading(false)
-  }, [userId, useCloud])
+  }, [userId, useCloud, migrateToCloud])
 
   useEffect(() => {
     load()

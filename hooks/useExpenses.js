@@ -13,10 +13,38 @@ export function useExpenses() {
   const userId = user?.email || null
   const useCloud = isSupabaseConfigured() && !!userId
 
+  // Migration localStorage → Supabase pour expenses
+  const migrateToCloud = useCallback(async () => {
+    if (!useCloud) return
+
+    const localData = loadData()
+    const localExpenses = localData.expenses || []
+
+    if (localExpenses.length === 0) return
+
+    console.log(`[Migration Expenses] ${localExpenses.length} dépenses trouvées en local, migration vers Supabase...`)
+
+    for (const expense of localExpenses) {
+      try {
+        await addExpense(userId, expense)
+        console.log(`[Migration Expenses] ✓ ${expense.name}`)
+      } catch (error) {
+        console.error(`[Migration Expenses] ✗ ${expense.name}:`, error)
+      }
+    }
+
+    // Vider localStorage après migration
+    saveData({ ...localData, expenses: [] })
+    console.log('[Migration Expenses] Migration terminée')
+  }, [userId, useCloud])
+
   const load = useCallback(async () => {
     setLoading(true)
 
     if (useCloud) {
+      // Vérifier s'il faut migrer depuis localStorage
+      await migrateToCloud()
+
       // Mode Supabase
       const data = await loadExpenses(userId)
       setExpenses(data)
@@ -27,7 +55,7 @@ export function useExpenses() {
     }
 
     setLoading(false)
-  }, [userId, useCloud])
+  }, [userId, useCloud, migrateToCloud])
 
   useEffect(() => {
     load()
