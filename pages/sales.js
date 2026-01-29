@@ -268,9 +268,9 @@ export default function Sales() {
                 <h2 className="text-lg font-semibold text-white">Historique des ventes</h2>
                 <span className="text-sm text-gray-500">{sales.length} vente{sales.length > 1 ? 's' : ''}</span>
               </div>
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center lg:justify-items-start">
                 {sales.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${index * 50}ms` }}>
+                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center lg:justify-start" style={{ animationDelay: `${index * 50}ms` }}>
                     <SaleCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}

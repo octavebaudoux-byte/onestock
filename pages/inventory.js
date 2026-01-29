@@ -201,15 +201,16 @@ export default function Inventory() {
 
           {/* Grid */}
           {filteredSneakers.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center lg:justify-items-start">
               {filteredSneakers.map(sneaker => (
-                <SneakerCard
-                  key={sneaker.id}
-                  sneaker={sneaker}
-                  onEdit={handleEditSneaker}
-                  onDelete={handleDeleteSneaker}
-                  onToggle={handleToggle}
-                />
+                <div key={sneaker.id} className="w-full flex justify-center lg:justify-start">
+                  <SneakerCard
+                    sneaker={sneaker}
+                    onEdit={handleEditSneaker}
+                    onDelete={handleDeleteSneaker}
+                    onToggle={handleToggle}
+                  />
+                </div>
               ))}
             </div>
           ) : (
