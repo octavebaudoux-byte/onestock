@@ -3,7 +3,7 @@ import Head from 'next/head'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, ComposedChart
+  PieChart, Pie, Cell, Legend
 } from 'recharts'
 import Layout from '../components/Layout'
 import { formatPrice, calculateStats } from '../lib/store'
@@ -166,46 +166,65 @@ export default function Stats() {
             </div>
           ) : (
             <>
-              {/* Monthly chart avec sélecteur d'année */}
-              <div className="card mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold">Évolution mensuelle</h2>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handlePrevYear}
-                      className="p-2 hover:bg-dark-600 rounded-lg transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-gray-400" />
-                    </button>
-                    <span className="text-lg font-bold text-blue-400 min-w-[60px] text-center">
-                      {selectedYear}
-                    </span>
-                    <button
-                      onClick={handleNextYear}
-                      disabled={selectedYear >= new Date().getFullYear()}
-                      className={`p-2 rounded-lg transition-colors ${
-                        selectedYear >= new Date().getFullYear()
-                          ? 'opacity-30 cursor-not-allowed'
-                          : 'hover:bg-dark-600'
-                      }`}
-                    >
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </button>
+              {/* Charts grid - Achats et Ventes/Profit séparés */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Achats en volumes (barres) */}
+                <div className="card">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Achats mensuels</h2>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handlePrevYear}
+                        className="p-2 hover:bg-dark-600 rounded-lg transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-400" />
+                      </button>
+                      <span className="text-lg font-bold text-blue-400 min-w-[60px] text-center">
+                        {selectedYear}
+                      </span>
+                      <button
+                        onClick={handleNextYear}
+                        disabled={selectedYear >= new Date().getFullYear()}
+                        className={`p-2 rounded-lg transition-colors ${
+                          selectedYear >= new Date().getFullYear()
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:bg-dark-600'
+                        }`}
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis dataKey="name" stroke="#888" />
+                        <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Bar dataKey="achats" name="Achats" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={monthlyChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="name" stroke="#888" />
-                      <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Bar dataKey="achats" name="Achats" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      <Line type="monotone" dataKey="ventes" name="Ventes" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 4 }} />
-                      <Line type="monotone" dataKey="profit" name="Profit" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 4 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+
+                {/* Ventes et Profit en courbes */}
+                <div className="card">
+                  <h2 className="text-xl font-semibold mb-4">Ventes & Profit</h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis dataKey="name" stroke="#888" />
+                        <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Line type="monotone" dataKey="ventes" name="Ventes" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 5 }} activeDot={{ r: 7 }} />
+                        <Line type="monotone" dataKey="profit" name="Profit" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 5 }} activeDot={{ r: 7 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
 

@@ -86,6 +86,12 @@ export default function Dashboard() {
     setIsModalOpen(true)
   }
 
+  const handleSellSneaker = (sneaker) => {
+    setEditingSneaker(sneaker)
+    setModalMode('sale')
+    setIsModalOpen(true)
+  }
+
   // Dernières paires (6 pour la grille)
   const recentSneakers = [...sneakers]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -271,6 +277,7 @@ export default function Dashboard() {
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
                       onToggle={handleToggle}
+                      onSell={handleSellSneaker}
                     />
                   </div>
                 ))}

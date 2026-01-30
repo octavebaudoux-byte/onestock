@@ -105,6 +105,12 @@ export default function Inventory() {
     setIsModalOpen(true)
   }
 
+  const handleSellSneaker = (sneaker) => {
+    setEditingSneaker(sneaker)
+    setModalMode('sale')
+    setIsModalOpen(true)
+  }
+
   const handleExport = () => {
     exportToCSV(sneakers, 'stock')
   }
@@ -211,6 +217,7 @@ export default function Inventory() {
                     onEdit={handleEditSneaker}
                     onDelete={handleDeleteSneaker}
                     onToggle={handleToggle}
+                    onSell={handleSellSneaker}
                   />
                 </div>
               ))}

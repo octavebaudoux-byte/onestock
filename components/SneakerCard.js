@@ -2,7 +2,7 @@ import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package } from 'lucide-re
 import { formatPrice } from '../lib/store'
 import { useLanguage } from '../contexts/LanguageContext'
 
-export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
+export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSell }) {
   const { t } = useLanguage()
   const profit = sneaker.status === 'sold' && sneaker.sellPrice
     ? sneaker.sellPrice - sneaker.buyPrice - (sneaker.fees || 0)
@@ -47,14 +47,22 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-        {/* Badge */}
-        <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg backdrop-blur-sm ${
-          sneaker.status === 'sold'
-            ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black'
-            : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
-        }`}>
-          {sneaker.status === 'sold' ? t('card.sold') : t('card.stock')}
-        </div>
+        {/* Badge / Sell Button */}
+        {sneaker.status === 'sold' ? (
+          <div className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg backdrop-blur-sm bg-gradient-to-r from-cyan-500 to-cyan-400 text-black">
+            {t('card.sold')}
+          </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (onSell) onSell(sneaker)
+            }}
+            className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg backdrop-blur-sm bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-cyan-600 hover:to-cyan-500 hover:scale-110 transition-all duration-200 active:scale-95"
+          >
+            {t('card.stock')}
+          </button>
+        )}
 
         {/* Actions - Plus grands */}
         <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
