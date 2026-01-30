@@ -31,9 +31,9 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Compact Sidebar - icons only */}
       <aside className="hidden md:flex w-20 bg-dark-800 border-r border-blue-500/20 flex-col fixed inset-y-0 left-0 z-30">
-        {/* Logo - compact */}
+        {/* Logo - icon only */}
         <div className="p-4 border-b border-blue-500/20 flex items-center justify-center">
-          <Logo size="sm" />
+          <Logo size="sm" showText={false} />
         </div>
 
         {/* Navigation - icons only with tooltips */}

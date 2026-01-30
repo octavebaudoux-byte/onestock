@@ -8,10 +8,12 @@ import SneakerCard from '../components/SneakerCard'
 import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useExpenses } from '../hooks/useExpenses'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Dashboard() {
   const { sneakers, loading, save, update, remove } = useData()
   const { expenses } = useExpenses()
+  const { t } = useLanguage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
@@ -100,7 +102,7 @@ export default function Dashboard() {
       <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <div className="text-blue-300 animate-pulse">Chargement...</div>
+          <div className="text-blue-300 animate-pulse">{t('common.loading')}</div>
         </div>
       </div>
     )
@@ -109,8 +111,8 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>OneStock - Dashboard</title>
-        <meta name="description" content="Gestion de stock sneakers" />
+        <title>OneStock - {t('dashboard.title')}</title>
+        <meta name="description" content="Sneaker inventory management" />
       </Head>
 
       <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal}>
@@ -122,10 +124,10 @@ export default function Dashboard() {
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-8 h-8 text-cyan-400 animate-pulse" />
                 <h1 className="text-4xl font-black bg-gradient-to-r from-white via-blue-200 to-cyan-300 bg-clip-text text-transparent">
-                  Dashboard
+                  {t('dashboard.title')}
                 </h1>
               </div>
-              <p className="text-blue-200/70 text-lg">Vue d'ensemble de ton stock et tes performances</p>
+              <p className="text-blue-200/70 text-lg">{t('dashboard.subtitle')}</p>
             </div>
           </div>
 

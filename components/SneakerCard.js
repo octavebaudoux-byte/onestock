@@ -1,7 +1,9 @@
 import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package } from 'lucide-react'
 import { formatPrice } from '../lib/store'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
+  const { t } = useLanguage()
   const profit = sneaker.status === 'sold' && sneaker.sellPrice
     ? sneaker.sellPrice - sneaker.buyPrice - (sneaker.fees || 0)
     : null
@@ -51,7 +53,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
             ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black'
             : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
         }`}>
-          {sneaker.status === 'sold' ? 'VENDU' : 'STOCK'}
+          {sneaker.status === 'sold' ? t('card.sold') : t('card.stock')}
         </div>
 
         {/* Actions - Plus grands */}
@@ -85,11 +87,11 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
         {/* Prix avec design amélioré */}
         <div className="flex justify-between items-center p-3 bg-dark-900/50 rounded-xl border border-gray-700/50">
           <div className="text-left">
-            <div className="text-xs text-gray-500">Achat</div>
+            <div className="text-xs text-gray-500">{t('card.buy')}</div>
             <div className="text-sm font-semibold text-gray-300">{formatPrice(sneaker.buyPrice)}</div>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-500">Vente</div>
+            <div className="text-xs text-gray-500">{t('card.sell')}</div>
             <div className="text-sm font-bold text-cyan-400">
               {sneaker.sellPrice ? formatPrice(sneaker.sellPrice) : '—'}
             </div>
@@ -103,7 +105,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
               ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-400 border border-cyan-500/30'
               : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30'
           }`}>
-            <div className="text-xs text-gray-400 mb-1">Profit</div>
+            <div className="text-xs text-gray-400 mb-1">{t('card.profit')}</div>
             <div className="text-lg">
               {profit >= 0 ? '+' : ''}{formatPrice(profit)}
             </div>
@@ -122,7 +124,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
               }`}
             >
               <CreditCard className="w-5 h-5" />
-              <span className="hidden lg:inline">{sneaker.paymentStatus === 'received' ? 'Payé' : 'Attente'}</span>
+              <span className="hidden lg:inline">{sneaker.paymentStatus === 'received' ? t('card.paid') : t('card.waiting')}</span>
             </button>
             <button
               onClick={handleToggleDelivery}
@@ -133,7 +135,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
               }`}
             >
               <Package className="w-5 h-5" />
-              <span className="hidden lg:inline">{sneaker.deliveryStatus === 'delivered' ? 'Livré' : 'Envoi'}</span>
+              <span className="hidden lg:inline">{sneaker.deliveryStatus === 'delivered' ? t('card.shipped') : t('card.shipping')}</span>
             </button>
           </div>
         )}
@@ -151,12 +153,12 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
             {sneaker.itemReceived ? (
               <>
                 <CheckCircle className="w-6 h-6" />
-                <span>Article reçu</span>
+                <span>{t('card.received')}</span>
               </>
             ) : (
               <>
                 <Truck className="w-6 h-6" />
-                <span>En transit</span>
+                <span>{t('card.inTransit')}</span>
               </>
             )}
           </button>
