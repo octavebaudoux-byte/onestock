@@ -26,7 +26,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle }) {
   }
 
   return (
-    <div className="group relative bg-gradient-to-br from-dark-800/90 via-dark-800 to-dark-900/90 border-2 border-blue-500/30 rounded-2xl overflow-hidden hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 w-full max-w-[280px] lg:max-w-[320px] hover:scale-[1.02]">
+    <div className="group relative bg-gradient-to-br from-dark-800/90 via-dark-800 to-dark-900/90 border-2 border-blue-500/30 rounded-2xl overflow-hidden hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 w-full max-w-[380px] sm:max-w-[320px] hover:scale-[1.02]">
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 

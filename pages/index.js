@@ -261,9 +261,9 @@ export default function Dashboard() {
             </div>
 
             {recentSneakers.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center lg:justify-items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
                 {recentSneakers.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center lg:justify-start" style={{ animationDelay: `${500 + index * 100}ms` }}>
+                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${500 + index * 100}ms` }}>
                     <SneakerCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
@@ -301,9 +301,9 @@ export default function Dashboard() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center lg:justify-items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
                 {recentSales.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center lg:justify-start" style={{ animationDelay: `${700 + index * 100}ms` }}>
+                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${700 + index * 100}ms` }}>
                     <SneakerCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
