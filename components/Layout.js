@@ -43,21 +43,21 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
 
         {/* Navigation - icons only with tooltips */}
         <nav className="flex-1 p-2 pt-4">
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {navItems.map((item) => {
               const isActive = router.pathname === item.href
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`group relative flex items-center justify-center w-full h-14 rounded-xl transition-all ${
+                    className={`group relative flex items-center justify-center w-full h-12 rounded-xl transition-all ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : 'text-blue-200/70 hover:text-white hover:bg-dark-600'
                     }`}
                     title={item.label}
                   >
-                    <item.icon className="w-6 h-6" />
+                    <item.icon className="w-5 h-5" />
                     {/* Tooltip */}
                     <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
                       {item.label}
@@ -73,10 +73,10 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
         <div className="p-2 border-t border-blue-500/20 space-y-2">
           <button
             onClick={onAddClick}
-            className="group relative w-full h-14 btn btn-primary flex items-center justify-center rounded-xl"
+            className="group relative w-full h-12 btn btn-primary flex items-center justify-center rounded-xl"
             title={t('actions.addToStock')}
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
             <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
               {t('actions.addToStock')}
             </span>
@@ -84,10 +84,10 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onAddSaleClick && (
             <button
               onClick={onAddSaleClick}
-              className="group relative w-full h-14 btn flex items-center justify-center rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white"
+              className="group relative w-full h-12 btn flex items-center justify-center rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white"
               title={t('actions.recordSale')}
             >
-              <DollarSign className="w-6 h-6" />
+              <DollarSign className="w-5 h-5" />
               <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
                 {t('actions.recordSale')}
               </span>
@@ -96,10 +96,10 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onExportClick && (
             <button
               onClick={onExportClick}
-              className="group relative w-full h-12 btn btn-secondary flex items-center justify-center rounded-xl"
+              className="group relative w-full h-10 btn btn-secondary flex items-center justify-center rounded-xl"
               title={t('actions.export')}
             >
-              <Download className="w-5 h-5" />
+              <Download className="w-4 h-4" />
               <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
                 {t('actions.export')}
               </span>
@@ -129,7 +129,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
                     : 'text-gray-400 active:scale-95'
                 }`}
               >
-                <item.icon className="w-6 h-6" />
+                <item.icon className="w-5 h-5" />
               </Link>
             )
           })}
@@ -137,7 +137,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
             onClick={onAddClick}
             className="flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 active:scale-95 transition-transform"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
           </button>
         </div>
       </nav>
