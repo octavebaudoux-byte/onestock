@@ -117,7 +117,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
       {/* Mobile bottom navigation - icons only */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-dark-800/95 backdrop-blur-lg border-t border-blue-500/20 z-30 safe-bottom">
         <div className="flex items-center justify-around px-1 py-3">
-          {navItems.map((item) => {
+          {navItems.filter(item => ['/', '/inventory', '/sales', '/stats', '/calendar'].includes(item.href)).map((item) => {
             const isActive = router.pathname === item.href
             return (
               <Link
@@ -135,10 +135,18 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           })}
           <button
             onClick={onAddClick}
-            className="flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 active:scale-95 transition-transform"
+            className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-transform"
           >
             <Plus className="w-5 h-5" />
           </button>
+          {onAddSaleClick && (
+            <button
+              onClick={onAddSaleClick}
+              className="flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 active:scale-95 transition-transform"
+            >
+              <DollarSign className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </nav>
     </div>

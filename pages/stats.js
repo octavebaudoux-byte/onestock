@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react'
 import Head from 'next/head'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, ComposedChart
 } from 'recharts'
 import Layout from '../components/Layout'
 import { formatPrice, calculateStats } from '../lib/store'
@@ -195,16 +195,16 @@ export default function Stats() {
                 </div>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyChartData}>
+                    <ComposedChart data={monthlyChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                       <XAxis dataKey="name" stroke="#888" />
                       <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar dataKey="achats" name="Achats" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="ventes" name="Ventes" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="profit" name="Profit" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Line type="monotone" dataKey="ventes" name="Ventes" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 4 }} />
+                      <Line type="monotone" dataKey="profit" name="Profit" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 4 }} />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </div>
