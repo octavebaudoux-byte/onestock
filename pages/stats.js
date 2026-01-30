@@ -211,7 +211,7 @@ export default function Stats() {
 
                 {/* Ventes et Profit en courbes */}
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">Ventes & Profit</h2>
+                  <h2 className="text-xl font-semibold mb-4">Vente</h2>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={monthlyChartData}>
