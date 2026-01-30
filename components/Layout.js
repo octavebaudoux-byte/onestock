@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Logo from './Logo'
+import GlobalSearchHeader from './GlobalSearchHeader'
 import {
   LayoutDashboard,
   Package,
@@ -11,7 +12,8 @@ import {
   Download,
   Settings,
   CreditCard,
-  Search
+  Search,
+  Calendar
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -22,6 +24,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
     { href: '/price-checker', icon: Search, label: language === 'fr' ? 'Prix' : 'Prices' },
+    { href: '/calendar', icon: Calendar, label: language === 'fr' ? 'Calendrier' : 'Calendar' },
     { href: '/inventory', icon: Package, label: t('nav.inventory') },
     { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
     { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
@@ -107,6 +110,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
 
       {/* Main content */}
       <main className="flex-1 overflow-auto md:ml-20 pb-20 md:pb-0">
+        <GlobalSearchHeader />
         {children}
       </main>
 

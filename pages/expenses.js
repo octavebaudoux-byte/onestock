@@ -4,11 +4,14 @@ import { CreditCard, Plus, Trash2, Edit3, X, Check } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useExpenses } from '../hooks/useExpenses'
 import { EXPENSE_CATEGORIES, formatPrice, formatDate } from '../lib/store'
+import { useLanguage } from '../contexts/LanguageContext'
 
-const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function ExpensesPage() {
   const { expenses, add, update, remove } = useExpenses()
+  const { t, language } = useLanguage()
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [filterMonth, setFilterMonth] = useState('all')
@@ -62,6 +65,7 @@ export default function ExpensesPage() {
 
   // Mois disponibles pour le filtre
   const availableMonths = useMemo(() => {
+    const MONTHS = language === 'fr' ? MONTHS_FR : MONTHS_EN
     const months = new Set()
     expenses.forEach(e => {
       const d = new Date(e.date)
@@ -71,7 +75,7 @@ export default function ExpensesPage() {
       const [year, month] = m.split('-')
       return { value: m, label: `${MONTHS[parseInt(month)]} ${year}` }
     })
-  }, [expenses])
+  }, [expenses, language])
 
   const resetForm = () => {
     setForm({
@@ -110,7 +114,7 @@ export default function ExpensesPage() {
   }
 
   const handleDelete = (id) => {
-    if (confirm('Supprimer cette dépense ?')) {
+    if (confirm(t('expenses.deleteConfirm'))) {
       remove(id)
     }
   }
@@ -118,7 +122,7 @@ export default function ExpensesPage() {
   return (
     <>
       <Head>
-        <title>Dépenses - OneStock</title>
+        <title>{t('expenses.title')} - OneStock</title>
       </Head>
 
       <Layout>
@@ -128,8 +132,8 @@ export default function ExpensesPage() {
             <div className="flex items-center gap-3">
               <CreditCard className="w-8 h-8 text-orange-400" />
               <div>
-                <h1 className="text-3xl font-bold">Dépenses</h1>
-                <p className="text-gray-400">Suivi de tes frais et dépenses</p>
+                <h1 className="text-3xl font-bold">{t('expenses.title')}</h1>
+                <p className="text-gray-400">{t('expenses.subtitle')}</p>
               </div>
             </div>
             <button
@@ -137,23 +141,23 @@ export default function ExpensesPage() {
               className="btn btn-primary flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              Ajouter
+              {t('expenses.add')}
             </button>
           </div>
 
           {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="card p-5">
-              <div className="text-sm text-gray-400 mb-1">Ce mois</div>
+              <div className="text-sm text-gray-400 mb-1">{t('expenses.thisMonth')}</div>
               <div className="text-2xl font-bold text-orange-400">-{formatPrice(stats.totalThisMonth)}</div>
             </div>
             <div className="card p-5">
-              <div className="text-sm text-gray-400 mb-1">Total global</div>
+              <div className="text-sm text-gray-400 mb-1">{t('expenses.totalGlobal')}</div>
               <div className="text-2xl font-bold text-red-400">-{formatPrice(stats.totalAll)}</div>
             </div>
             <div className="card p-5">
-              <div className="text-sm text-gray-400 mb-1">Filtré</div>
-              <div className="text-2xl font-bold text-white">{filteredExpenses.length} dépenses • {formatPrice(stats.totalFiltered)}</div>
+              <div className="text-sm text-gray-400 mb-1">{t('expenses.filtered')}</div>
+              <div className="text-2xl font-bold text-white">{filteredExpenses.length} {t('expenses.expensesCount')} • {formatPrice(stats.totalFiltered)}</div>
             </div>
           </div>
 
@@ -161,25 +165,25 @@ export default function ExpensesPage() {
           {showForm && (
             <div className="card p-6 mb-6 animate-fadeIn">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">{editingId ? 'Modifier' : 'Nouvelle dépense'}</h2>
+                <h2 className="text-lg font-semibold">{editingId ? t('expenses.edit') : t('expenses.new')}</h2>
                 <button onClick={resetForm} className="text-gray-400 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Nom *</label>
+                  <label className="block text-sm text-gray-400 mb-1">{t('expenses.name')} *</label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                    placeholder="Ex: Frais d'envoi StockX"
+                    placeholder={t('expenses.namePlaceholder')}
                     required
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Montant (€) *</label>
+                  <label className="block text-sm text-gray-400 mb-1">{t('expenses.amount')} *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -191,7 +195,7 @@ export default function ExpensesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Date</label>
+                  <label className="block text-sm text-gray-400 mb-1">{t('expenses.date')}</label>
                   <input
                     type="date"
                     value={form.date}
@@ -200,7 +204,7 @@ export default function ExpensesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Catégorie</label>
+                  <label className="block text-sm text-gray-400 mb-1">{t('expenses.category')}</label>
                   <select
                     value={form.category}
                     onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
@@ -212,22 +216,22 @@ export default function ExpensesPage() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">Notes</label>
+                  <label className="block text-sm text-gray-400 mb-1">{t('expenses.notes')}</label>
                   <input
                     type="text"
                     value={form.notes}
                     onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                    placeholder="Détails optionnels..."
+                    placeholder={t('expenses.notesPlaceholder')}
                     className="w-full"
                   />
                 </div>
                 <div className="md:col-span-2 flex gap-3">
                   <button type="submit" className="btn btn-primary flex items-center gap-2">
                     <Check className="w-4 h-4" />
-                    {editingId ? 'Modifier' : 'Ajouter'}
+                    {editingId ? t('expenses.update') : t('expenses.save')}
                   </button>
                   <button type="button" onClick={resetForm} className="btn btn-secondary">
-                    Annuler
+                    {t('expenses.cancel')}
                   </button>
                 </div>
               </form>
@@ -241,7 +245,7 @@ export default function ExpensesPage() {
               onChange={e => setFilterMonth(e.target.value)}
               className="text-sm"
             >
-              <option value="all">Tous les mois</option>
+              <option value="all">{t('expenses.allMonths')}</option>
               {availableMonths.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
@@ -251,7 +255,7 @@ export default function ExpensesPage() {
               onChange={e => setFilterCategory(e.target.value)}
               className="text-sm"
             >
-              <option value="all">Toutes catégories</option>
+              <option value="all">{t('expenses.allCategories')}</option>
               {EXPENSE_CATEGORIES.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -273,12 +277,12 @@ export default function ExpensesPage() {
           {filteredExpenses.length === 0 ? (
             <div className="card p-12 text-center">
               <CreditCard className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">Aucune dépense enregistrée</p>
+              <p className="text-gray-400">{t('expenses.noExpenses')}</p>
               <button
                 onClick={() => { resetForm(); setShowForm(true) }}
                 className="btn btn-primary mt-4"
               >
-                Ajouter une dépense
+                {t('expenses.addExpense')}
               </button>
             </div>
           ) : (

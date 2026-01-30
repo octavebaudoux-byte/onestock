@@ -13,7 +13,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 export default function Dashboard() {
   const { sneakers, loading, save, update, remove } = useData()
   const { expenses } = useExpenses()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
@@ -59,7 +59,7 @@ export default function Dashboard() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm('Supprimer cette paire ?')) {
+    if (confirm(t('dashboard.deleteConfirm'))) {
       await remove(id)
     }
   }
@@ -145,9 +145,9 @@ export default function Dashboard() {
                   <Package className="w-5 h-5 text-blue-400" />
                 </div>
                 <div className="text-4xl font-black text-white mb-1">{animatedStats.stock || stats.inStockCount}</div>
-                <div className="text-sm text-blue-300/70">Paires en stock</div>
+                <div className="text-sm text-blue-300/70">{t('dashboard.pairsInStock')}</div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-blue-400/60">{stats.totalPairs} au total</span>
+                  <span className="text-xs text-blue-400/60">{stats.totalPairs} {t('dashboard.total')}</span>
                   {stats.totalPairs > 0 && (
                     <span className="flex items-center gap-1 text-xs font-semibold text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded-full">
                       <Percent className="w-3 h-3" />
@@ -170,9 +170,9 @@ export default function Dashboard() {
                   <Target className="w-5 h-5 text-purple-400" />
                 </div>
                 <div className="text-4xl font-black text-white mb-1">{formatPrice(animatedStats.value || stats.stockValue)}</div>
-                <div className="text-sm text-purple-300/70">Valeur du stock</div>
+                <div className="text-sm text-purple-300/70">{t('dashboard.stockValue')}</div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-purple-400/60">{formatPrice(stats.totalInvested)} investi</span>
+                  <span className="text-xs text-purple-400/60">{formatPrice(stats.totalInvested)} {t('dashboard.invested')}</span>
                   {stats.totalInvested > 0 && (
                     <span className="flex items-center gap-1 text-xs font-semibold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded-full">
                       <Percent className="w-3 h-3" />
@@ -203,10 +203,10 @@ export default function Dashboard() {
                 <div className={`text-4xl font-black mb-1 ${netProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
                   {netProfit >= 0 ? '+' : ''}{formatPrice(netProfit)}
                 </div>
-                <div className={`text-sm ${netProfit >= 0 ? 'text-cyan-300/70' : 'text-red-300/70'}`}>Profit net</div>
+                <div className={`text-sm ${netProfit >= 0 ? 'text-cyan-300/70' : 'text-red-300/70'}`}>{t('dashboard.netProfit')}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className={`text-xs ${netProfit >= 0 ? 'text-cyan-400/60' : 'text-red-400/60'}`}>
-                    {animatedStats.sold || stats.soldCount} ventes{totalExpenses > 0 ? ` • -${formatPrice(totalExpenses)} frais` : ''}
+                    {animatedStats.sold || stats.soldCount} {t('dashboard.sales')}{totalExpenses > 0 ? ` • -${formatPrice(totalExpenses)} ${t('dashboard.fees')}` : ''}
                   </span>
                   {stats.totalSold > 0 && (
                     <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -232,9 +232,9 @@ export default function Dashboard() {
                   <Zap className="w-5 h-5 text-amber-400" />
                 </div>
                 <div className="text-4xl font-black text-white mb-1">{formatPrice(stats.avgProfit)}</div>
-                <div className="text-sm text-amber-300/70">Profit moyen</div>
+                <div className="text-sm text-amber-300/70">{t('dashboard.avgProfit')}</div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-amber-400/60">par paire vendue</span>
+                  <span className="text-xs text-amber-400/60">{t('dashboard.perPair')}</span>
                   {stats.soldCount > 0 && stats.avgProfit !== 0 && (
                     <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
                       stats.avgProfit >= 0 ? 'text-amber-400 bg-amber-500/20' : 'text-red-400 bg-red-500/20'
@@ -253,11 +253,11 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Flame className="w-6 h-6 text-orange-400" />
-                <h2 className="text-2xl font-bold text-white">Derniers ajouts</h2>
+                <h2 className="text-2xl font-bold text-white">{t('dashboard.latestAdditions')}</h2>
               </div>
               {sneakers.length > 6 && (
                 <a href="/inventory" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                  Voir tout →
+                  {t('dashboard.viewAll')} →
                 </a>
               )}
             </div>
@@ -280,10 +280,10 @@ export default function Dashboard() {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
                 <div className="relative">
                   <div className="text-7xl mb-6 animate-bounce">👟</div>
-                  <p className="text-xl text-gray-300 mb-2">Aucune paire dans ton stock</p>
-                  <p className="text-gray-500 mb-6">Commence à tracker tes sneakers !</p>
+                  <p className="text-xl text-gray-300 mb-2">{t('dashboard.noPairs')}</p>
+                  <p className="text-gray-500 mb-6">{t('dashboard.startTracking')}</p>
                   <button onClick={openAddModal} className="btn btn-primary text-lg px-8 py-3 hover:scale-105 transition-transform">
-                    Ajouter ta première paire
+                    {t('dashboard.addFirst')}
                   </button>
                 </div>
               </div>
@@ -296,10 +296,10 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-6 h-6 text-cyan-400" />
-                  <h2 className="text-2xl font-bold text-white">Dernières ventes</h2>
+                  <h2 className="text-2xl font-bold text-white">{t('dashboard.latestSales')}</h2>
                 </div>
                 <a href="/sales" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                  Voir tout →
+                  {t('dashboard.viewAll')} →
                 </a>
               </div>
 
@@ -323,7 +323,7 @@ export default function Dashboard() {
             <div className="animate-slideUp" style={{ animationDelay: '800ms' }}>
               <div className="flex items-center gap-3 mb-6">
                 <Target className="w-6 h-6 text-purple-400" />
-                <h2 className="text-2xl font-bold text-white">Performance par marque</h2>
+                <h2 className="text-2xl font-bold text-white">{t('dashboard.performance')}</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {Object.entries(stats.brandStats)
@@ -337,7 +337,7 @@ export default function Dashboard() {
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                       <div className="relative">
                         <div className="text-lg font-bold text-white mb-1">{brand}</div>
-                        <div className="text-sm text-blue-300/60 mb-2">{brandData.count} paires</div>
+                        <div className="text-sm text-blue-300/60 mb-2">{brandData.count} {t('dashboard.pairs')}</div>
                         <div className={`text-lg font-bold ${brandData.profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
                           {brandData.profit >= 0 ? '+' : ''}{formatPrice(brandData.profit)}
                         </div>

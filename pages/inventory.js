@@ -6,9 +6,11 @@ import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Inventory() {
   const { sneakers, loading, save, update, remove } = useData()
+  const { t } = useLanguage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
@@ -76,7 +78,7 @@ export default function Inventory() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm('Supprimer cette paire ?')) {
+    if (confirm(t('dashboard.deleteConfirm'))) {
       await remove(id)
     }
   }
@@ -120,7 +122,7 @@ export default function Inventory() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Chargement...</div>
+        <div className="text-gray-400">{t('common.loading')}</div>
       </div>
     )
   }
@@ -128,7 +130,7 @@ export default function Inventory() {
   return (
     <>
       <Head>
-        <title>Inventaire - OneStock</title>
+        <title>{t('inventory.title')} - OneStock</title>
       </Head>
 
       <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport}>
@@ -136,9 +138,9 @@ export default function Inventory() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Inventaire</h1>
+              <h1 className="text-3xl font-bold mb-2">{t('inventory.title')}</h1>
               <p className="text-gray-400">
-                {stockCount} en stock • {soldCount} vendues • {formatPrice(totalValue)} de valeur
+                {stockCount} {t('inventory.inStock')} • {soldCount} {t('inventory.sold')} • {formatPrice(totalValue)} {t('inventory.value')}
               </p>
             </div>
           </div>
@@ -150,7 +152,7 @@ export default function Inventory() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="text"
-                placeholder="Rechercher..."
+                placeholder={t('inventory.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10"
@@ -163,9 +165,9 @@ export default function Inventory() {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="min-w-[140px]"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="stock">En stock</option>
-              <option value="sold">Vendues</option>
+              <option value="all">{t('inventory.allStatuses')}</option>
+              <option value="stock">{t('inventory.inStock')}</option>
+              <option value="sold">{t('inventory.sold')}</option>
             </select>
 
             {/* Brand filter */}
@@ -174,7 +176,7 @@ export default function Inventory() {
               onChange={(e) => setFilterBrand(e.target.value)}
               className="min-w-[140px]"
             >
-              <option value="all">Toutes les marques</option>
+              <option value="all">{t('inventory.allBrands')}</option>
               {brandsInStock.map(brand => (
                 <option key={brand} value={brand}>{brand}</option>
               ))}
@@ -186,17 +188,17 @@ export default function Inventory() {
               onChange={(e) => setSortBy(e.target.value)}
               className="min-w-[160px]"
             >
-              <option value="date">Plus récent</option>
-              <option value="name">Nom A-Z</option>
-              <option value="price_asc">Prix croissant</option>
-              <option value="price_desc">Prix décroissant</option>
-              <option value="profit">Meilleur profit</option>
+              <option value="date">{t('inventory.sortRecent')}</option>
+              <option value="name">{t('inventory.sortName')}</option>
+              <option value="price_asc">{t('inventory.sortPriceAsc')}</option>
+              <option value="price_desc">{t('inventory.sortPriceDesc')}</option>
+              <option value="profit">{t('inventory.sortProfit')}</option>
             </select>
           </div>
 
           {/* Results count */}
           <div className="text-sm text-gray-500 mb-4">
-            {filteredSneakers.length} résultat{filteredSneakers.length > 1 ? 's' : ''}
+            {filteredSneakers.length} {filteredSneakers.length > 1 ? t('inventory.resultsPlural') : t('inventory.results')}
           </div>
 
           {/* Grid */}
@@ -216,11 +218,11 @@ export default function Inventory() {
           ) : (
             <div className="card text-center py-16">
               <div className="text-5xl mb-4">🔍</div>
-              <p className="text-gray-400 mb-2">Aucune paire trouvée</p>
+              <p className="text-gray-400 mb-2">{t('inventory.noPairs')}</p>
               <p className="text-sm text-gray-500">
                 {sneakers.length === 0
-                  ? 'Ajoute ta première paire pour commencer'
-                  : 'Essaie de modifier tes filtres'}
+                  ? t('inventory.addFirst')
+                  : t('inventory.tryFilters')}
               </p>
             </div>
           )}

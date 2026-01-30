@@ -7,9 +7,11 @@ import SneakerModal from '../components/SneakerModal'
 import SaleCard from '../components/SaleCard'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Sales() {
   const { sneakers, loading, save, update, remove } = useData()
+  const { t } = useLanguage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [timeRange, setTimeRange] = useState('all')
@@ -76,7 +78,7 @@ export default function Sales() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm('Supprimer cette vente ?')) {
+    if (confirm(t('sales.deleteConfirm'))) {
       await remove(id)
     }
   }
@@ -110,7 +112,7 @@ export default function Sales() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Chargement...</div>
+        <div className="text-gray-400">{t('common.loading')}</div>
       </div>
     )
   }
@@ -118,7 +120,7 @@ export default function Sales() {
   return (
     <>
       <Head>
-        <title>Ventes - OneStock</title>
+        <title>{t('sales.title')} - OneStock</title>
       </Head>
 
       <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport}>
@@ -126,8 +128,8 @@ export default function Sales() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Ventes</h1>
-              <p className="text-gray-400">Historique et analyse de tes ventes</p>
+              <h1 className="text-3xl font-bold mb-2">{t('sales.title')}</h1>
+              <p className="text-gray-400">{t('sales.subtitle')}</p>
             </div>
 
             {/* Time range filter */}
@@ -136,10 +138,10 @@ export default function Sales() {
               onChange={(e) => setTimeRange(e.target.value)}
               className="min-w-[160px]"
             >
-              <option value="all">Toutes les ventes</option>
-              <option value="week">Cette semaine</option>
-              <option value="month">Ce mois</option>
-              <option value="year">Cette année</option>
+              <option value="all">{t('sales.allSales')}</option>
+              <option value="week">{t('sales.thisWeek')}</option>
+              <option value="month">{t('sales.thisMonth')}</option>
+              <option value="year">{t('sales.thisYear')}</option>
             </select>
           </div>
 
@@ -152,10 +154,10 @@ export default function Sales() {
               </div>
               <div className="flex items-center gap-2 text-blue-300/70 text-sm mb-2">
                 <ShoppingBag className="w-4 h-4" />
-                Ventes
+                {t('sales.salesCount')}
               </div>
               <div className="text-3xl font-black text-white">{salesStats.count}</div>
-              <div className="mt-1 text-xs text-blue-400/60">paires vendues</div>
+              <div className="mt-1 text-xs text-blue-400/60">{t('sales.pairsSold')}</div>
             </Link>
 
             {/* Chiffre d'affaires */}
@@ -165,10 +167,10 @@ export default function Sales() {
               </div>
               <div className="flex items-center gap-2 text-purple-300/70 text-sm mb-2">
                 <DollarSign className="w-4 h-4" />
-                Chiffre d'affaires
+                {t('sales.revenue')}
               </div>
               <div className="text-3xl font-black text-white">{formatPrice(salesStats.totalRevenue)}</div>
-              <div className="mt-1 text-xs text-purple-400/60">CA total</div>
+              <div className="mt-1 text-xs text-purple-400/60">{t('sales.totalRevenue')}</div>
             </Link>
 
             {/* Profit total */}
@@ -182,14 +184,14 @@ export default function Sales() {
               </div>
               <div className={`flex items-center gap-2 text-sm mb-2 ${salesStats.totalProfit >= 0 ? 'text-cyan-300/70' : 'text-red-300/70'}`}>
                 <TrendingUp className="w-4 h-4" />
-                Profit total
+                {t('sales.totalProfit')}
               </div>
               <div className={`text-3xl font-black ${salesStats.totalProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
                 {salesStats.totalProfit >= 0 ? '+' : ''}{formatPrice(salesStats.totalProfit)}
               </div>
               <div className="mt-1 flex items-center justify-between">
                 <span className={`text-xs ${salesStats.totalProfit >= 0 ? 'text-cyan-400/60' : 'text-red-400/60'}`}>
-                  Frais: {formatPrice(salesStats.totalFees)}
+                  {t('sales.fees')}: {formatPrice(salesStats.totalFees)}
                 </span>
                 {salesStats.avgROI !== 0 && (
                   <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -209,13 +211,13 @@ export default function Sales() {
               </div>
               <div className="flex items-center gap-2 text-amber-300/70 text-sm mb-2">
                 <Zap className="w-4 h-4" />
-                Profit moyen
+                {t('sales.avgProfit')}
               </div>
               <div className={`text-4xl font-black ${salesStats.avgProfit >= 0 ? 'text-amber-400' : 'text-red-400'}`}>
                 {salesStats.avgProfit >= 0 ? '+' : ''}{formatPrice(salesStats.avgProfit)}
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-amber-400/60">par vente</span>
+                <span className="text-xs text-amber-400/60">{t('sales.perSale')}</span>
                 {salesStats.count > 0 && salesStats.totalCost > 0 && (
                   <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
                     salesStats.avgProfit >= 0 ? 'text-amber-400 bg-amber-500/20' : 'text-red-400 bg-red-500/20'
@@ -233,7 +235,7 @@ export default function Sales() {
             <div className="mb-8 p-5 bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-transparent border border-emerald-500/30 rounded-2xl">
               <div className="flex items-center gap-2 text-sm text-emerald-400 mb-3">
                 <span className="text-lg">🏆</span>
-                <span className="font-semibold">Meilleure vente</span>
+                <span className="font-semibold">{t('sales.bestSale')}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -265,8 +267,8 @@ export default function Sales() {
           {sales.length > 0 ? (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Historique des ventes</h2>
-                <span className="text-sm text-gray-500">{sales.length} vente{sales.length > 1 ? 's' : ''}</span>
+                <h2 className="text-lg font-semibold text-white">{t('sales.history')}</h2>
+                <span className="text-sm text-gray-500">{sales.length} {sales.length > 1 ? t('sales.salesPlural') : t('sales.sale')}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
                 {sales.map((sneaker, index) => (
@@ -284,9 +286,9 @@ export default function Sales() {
           ) : (
             <div className="card text-center py-16">
               <div className="text-6xl mb-4">💰</div>
-              <p className="text-xl text-gray-300 mb-2">Aucune vente enregistrée</p>
+              <p className="text-xl text-gray-300 mb-2">{t('sales.noSales')}</p>
               <p className="text-sm text-gray-500">
-                Marque une paire comme "Vendue" dans l'inventaire
+                {t('sales.markAsSold')}
               </p>
             </div>
           )}
