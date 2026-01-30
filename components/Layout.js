@@ -24,11 +24,11 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
     { href: '/price-checker', icon: Search, label: language === 'fr' ? 'Prix' : 'Prices' },
-    { href: '/calendar', icon: Calendar, label: language === 'fr' ? 'Calendrier' : 'Calendar' },
     { href: '/inventory', icon: Package, label: t('nav.inventory') },
     { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
     { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
     { href: '/stats', icon: TrendingUp, label: t('nav.stats') },
+    { href: '/calendar', icon: Calendar, label: language === 'fr' ? 'Calendrier' : 'Calendar' },
     { href: '/settings', icon: Settings, label: t('nav.settings') },
   ]
 
