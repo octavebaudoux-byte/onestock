@@ -10,16 +10,18 @@ import {
   DollarSign,
   Download,
   Settings,
-  CreditCard
+  CreditCard,
+  Search
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick }) {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { href: '/price-checker', icon: Search, label: language === 'fr' ? 'Prix' : 'Prices' },
     { href: '/inventory', icon: Package, label: t('nav.inventory') },
     { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
     { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
