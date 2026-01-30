@@ -12,17 +12,19 @@ import {
   Settings,
   CreditCard
 } from 'lucide-react'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick }) {
   const router = useRouter()
+  const { t } = useLanguage()
 
   const navItems = [
-    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/inventory', icon: Package, label: 'Inventaire' },
-    { href: '/sales', icon: ShoppingBag, label: 'Ventes' },
-    { href: '/expenses', icon: CreditCard, label: 'Dépenses' },
-    { href: '/stats', icon: TrendingUp, label: 'Stats' },
-    { href: '/settings', icon: Settings, label: 'Paramètres' },
+    { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { href: '/inventory', icon: Package, label: t('nav.inventory') },
+    { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
+    { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
+    { href: '/stats', icon: TrendingUp, label: t('nav.stats') },
+    { href: '/settings', icon: Settings, label: t('nav.settings') },
   ]
 
   return (
@@ -67,22 +69,22 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           <button
             onClick={onAddClick}
             className="group relative w-full h-14 btn btn-primary flex items-center justify-center rounded-xl"
-            title="Ajouter au stock"
+            title={t('actions.addToStock')}
           >
             <Plus className="w-6 h-6" />
             <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
-              Ajouter au stock
+              {t('actions.addToStock')}
             </span>
           </button>
           {onAddSaleClick && (
             <button
               onClick={onAddSaleClick}
               className="group relative w-full h-14 btn flex items-center justify-center rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white"
-              title="Vente"
+              title={t('actions.recordSale')}
             >
               <DollarSign className="w-6 h-6" />
               <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
-                Enregistrer une vente
+                {t('actions.recordSale')}
               </span>
             </button>
           )}
@@ -90,11 +92,11 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
             <button
               onClick={onExportClick}
               className="group relative w-full h-12 btn btn-secondary flex items-center justify-center rounded-xl"
-              title="Exporter"
+              title={t('actions.export')}
             >
               <Download className="w-5 h-5" />
               <span className="absolute left-full ml-4 px-3 py-2 bg-dark-700 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
-                Exporter CSV
+                {t('actions.export')}
               </span>
             </button>
           )}
