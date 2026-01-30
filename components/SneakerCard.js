@@ -47,15 +47,6 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-        {/* Badge */}
-        <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg backdrop-blur-sm ${
-          sneaker.status === 'sold'
-            ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-black'
-            : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
-        }`}>
-          {sneaker.status === 'sold' ? t('card.sold') : t('card.stock')}
-        </div>
-
         {/* Actions */}
         <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
           <button
