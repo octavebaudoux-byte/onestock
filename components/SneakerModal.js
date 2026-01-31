@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2 } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
+import { useToast } from '../contexts/ToastContext'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
+  const { showToast } = useToast()
   // mode peut être: 'add' (inventaire), 'sale' (vente directe), 'edit'
   const [formData, setFormData] = useState({
     name: '',
@@ -26,6 +28,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     invoiceUrl: '',
     paymentStatus: 'pending',
     deliveryStatus: 'pending',
+    listedOnPlatforms: [],
+    targetSellPrice: '',
   })
 
   // Search state
@@ -38,6 +42,14 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
 
   useEffect(() => {
     if (sneaker) {
+      // Gérer la compatibilité avec l'ancien champ listedOnPlatform (singulier)
+      let platforms = []
+      if (sneaker.listedOnPlatforms && Array.isArray(sneaker.listedOnPlatforms)) {
+        platforms = sneaker.listedOnPlatforms
+      } else if (sneaker.listedOnPlatform && sneaker.listedOnPlatform !== '') {
+        platforms = [sneaker.listedOnPlatform]
+      }
+
       setFormData({
         ...sneaker,
         category: sneaker.category || 'sneakers',
@@ -48,6 +60,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         buyDate: sneaker.buyDate?.split('T')[0] || '',
         sellDate: sneaker.sellDate?.split('T')[0] || (mode === 'sale' ? new Date().toISOString().split('T')[0] : ''),
         invoiceUrl: sneaker.invoiceUrl || '',
+        listedOnPlatforms: platforms,
       })
     } else {
       setFormData({
@@ -71,6 +84,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         invoiceUrl: '',
         paymentStatus: 'pending',
         deliveryStatus: 'pending',
+        listedOnPlatforms: [],
+        targetSellPrice: '',
       })
       setShowSearch(mode === 'add' || mode === 'sale')
     }
@@ -178,8 +193,38 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       buyPrice: parseFloat(formData.buyPrice) || 0,
       sellPrice: formData.sellPrice ? parseFloat(formData.sellPrice) : null,
       fees: formData.fees ? parseFloat(formData.fees) : 0,
+      targetSellPrice: formData.targetSellPrice ? parseFloat(formData.targetSellPrice) : null,
       createdAt: sneaker?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+    }
+
+    // Détecter si c'est une vente et s'il y avait des plateformes listées
+    const wasListed = sneaker?.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0
+    const isBeingSold = data.status === 'sold'
+    const soldPlatform = data.sellPlatform
+
+    if (isBeingSold && wasListed) {
+      // Filtrer les plateformes où il faut retirer l'annonce (toutes sauf celle où vendu)
+      const platformsToRemove = sneaker.listedOnPlatforms.filter(p => p !== soldPlatform)
+
+      if (platformsToRemove.length > 0) {
+        // Afficher la notification toast
+        showToast({
+          message: '✅ Vente enregistrée !',
+          platforms: platformsToRemove,
+          onRemindLater: () => {
+            // Stocker un rappel dans localStorage
+            const reminders = JSON.parse(localStorage.getItem('platform_reminders') || '[]')
+            reminders.push({
+              sneakerId: data.id,
+              sneakerName: data.name,
+              platforms: platformsToRemove,
+              timestamp: new Date().toISOString()
+            })
+            localStorage.setItem('platform_reminders', JSON.stringify(reminders))
+          }
+        })
+      }
     }
 
     onSave(data)
@@ -189,6 +234,15 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleTogglePlatform = (platform) => {
+    setFormData(prev => ({
+      ...prev,
+      listedOnPlatforms: prev.listedOnPlatforms.includes(platform)
+        ? prev.listedOnPlatforms.filter(p => p !== platform)
+        : [...prev.listedOnPlatforms, platform]
+    }))
   }
 
   if (!isOpen) return null
@@ -477,6 +531,58 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 </select>
               </div>
             </div>
+
+            {/* Plateforme de mise en vente et Prix cible - visible en mode add et edit (si en stock) */}
+            {(mode === 'add' || (mode === 'edit' && formData.status === 'stock')) && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    💎 Prix de vente cible (optionnel)
+                  </label>
+                  <input
+                    type="number"
+                    name="targetSellPrice"
+                    value={formData.targetSellPrice}
+                    onChange={handleChange}
+                    placeholder="250"
+                    min="0"
+                    step="0.01"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-3">
+                    📢 Mis en vente sur (cochez une ou plusieurs plateformes)
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {PLATFORMS.map(platform => (
+                      <label
+                        key={platform}
+                        className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          formData.listedOnPlatforms.includes(platform)
+                            ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                            : 'bg-dark-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.listedOnPlatforms.includes(platform)}
+                          onChange={() => handleTogglePlatform(platform)}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="text-sm font-medium">{platform}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.listedOnPlatforms.length > 0 && (
+                    <div className="mt-2 text-xs text-blue-400">
+                      {formData.listedOnPlatforms.length} plateforme{formData.listedOnPlatforms.length > 1 ? 's' : ''} sélectionnée{formData.listedOnPlatforms.length > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Toggle Livraison - en mode add ou edit (si en stock) */}
             {(mode === 'add' || (mode === 'edit' && formData.status === 'stock')) && (

@@ -8,6 +8,15 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
     ? sneaker.sellPrice - sneaker.buyPrice - (sneaker.fees || 0)
     : null
 
+  // Profit potentiel pour les items en stock
+  const potentialProfit = sneaker.status === 'stock' && sneaker.targetSellPrice
+    ? sneaker.targetSellPrice - sneaker.buyPrice - (sneaker.buyPrice * 0.10) // 10% de frais estimés
+    : null
+
+  const potentialROI = potentialProfit !== null && sneaker.buyPrice > 0
+    ? (potentialProfit / sneaker.buyPrice) * 100
+    : null
+
   const handleToggleReceived = (e) => {
     e.stopPropagation()
     if (onToggle) onToggle(sneaker.id, { itemReceived: !sneaker.itemReceived })
@@ -100,6 +109,39 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
             <div className="text-sm">
               {profit >= 0 ? '+' : ''}{formatPrice(profit)}
             </div>
+          </div>
+        )}
+
+        {/* Profit potentiel pour les items en stock */}
+        {sneaker.status === 'stock' && potentialProfit !== null && (
+          <div className={`py-2 px-3 rounded-lg text-center font-bold shadow-md ${
+            potentialProfit >= 0
+              ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-400 border border-purple-500/30'
+              : 'bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 border border-orange-500/30'
+          }`}>
+            <div className="text-xs text-gray-400 mb-1">
+              {language === 'fr' ? 'Profit potentiel' : 'Potential profit'}
+            </div>
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span>{potentialProfit >= 0 ? '+' : ''}{formatPrice(potentialProfit)}</span>
+              {potentialROI !== null && (
+                <span className="text-xs">
+                  ({potentialROI >= 0 ? '+' : ''}{potentialROI.toFixed(0)}%)
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Badges plateformes de mise en vente */}
+        {sneaker.status === 'stock' && sneaker.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {sneaker.listedOnPlatforms.map((platform, idx) => (
+              <div key={idx} className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <span className="text-xs text-blue-400">📢</span>
+                <span className="text-xs text-blue-300 font-medium">{platform}</span>
+              </div>
+            ))}
           </div>
         )}
 
