@@ -311,6 +311,17 @@ export default function Sales() {
         sneaker={editingSneaker}
         mode={modalMode}
       />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title={t('dashboard.deleteConfirm') || 'Supprimer cette paire ?'}
+        message="Cette action est irréversible. Toutes les données de cette paire seront définitivement supprimées."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        isDangerous={true}
+      />
     </>
   )
 }
