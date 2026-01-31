@@ -137,13 +137,25 @@ export function useData() {
 
   // Sauvegarder (ajouter ou mettre à jour)
   const save = useCallback(async (sneaker) => {
+    console.log('💾 SAVE called with:', {
+      sneakerId: sneaker.id,
+      listedOnPlatforms: sneaker.listedOnPlatforms,
+      useCloud,
+      sneakersCount: sneakers.length
+    })
+
     const existing = sneakers.find(s => s.id === sneaker.id)
+
+    console.log('💾 SAVE - existing found?', !!existing)
+
     if (existing) {
+      console.log('💾 SAVE - Calling UPDATE')
       return await update(sneaker.id, sneaker)
     } else {
+      console.log('💾 SAVE - Calling ADD')
       return await add(sneaker)
     }
-  }, [sneakers, update, add])
+  }, [sneakers, update, add, useCloud])
 
   // Rafraîchir les données
   const refresh = useCallback(async () => {
