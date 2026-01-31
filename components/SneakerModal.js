@@ -41,12 +41,12 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       setFormData({
         ...sneaker,
         category: sneaker.category || 'sneakers',
-        status: sneaker.status || 'stock',
+        status: mode === 'sale' ? 'sold' : (sneaker.status || 'stock'),
         itemReceived: sneaker.itemReceived ?? false,
         paymentStatus: sneaker.paymentStatus || 'pending',
         deliveryStatus: sneaker.deliveryStatus || 'pending',
         buyDate: sneaker.buyDate?.split('T')[0] || '',
-        sellDate: sneaker.sellDate?.split('T')[0] || '',
+        sellDate: sneaker.sellDate?.split('T')[0] || (mode === 'sale' ? new Date().toISOString().split('T')[0] : ''),
         invoiceUrl: sneaker.invoiceUrl || '',
       })
     } else {
