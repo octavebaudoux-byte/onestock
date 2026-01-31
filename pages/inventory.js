@@ -4,6 +4,7 @@ import { Search } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -14,6 +15,7 @@ export default function Inventory() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
 
   // Filtres
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,8 +80,12 @@ export default function Inventory() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm(t('dashboard.deleteConfirm'))) {
-      await remove(id)
+    setConfirmDialog({ isOpen: true, id })
+  }
+
+  const confirmDelete = async () => {
+    if (confirmDialog.id) {
+      await remove(confirmDialog.id)
     }
   }
 
@@ -245,6 +251,17 @@ export default function Inventory() {
         onSave={handleSaveSneaker}
         sneaker={editingSneaker}
         mode={modalMode}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title={t('dashboard.deleteConfirm') || 'Supprimer cette paire ?'}
+        message="Cette action est irréversible. Toutes les données de cette paire seront définitivement supprimées."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        isDangerous={true}
       />
     </>
   )

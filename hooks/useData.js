@@ -74,8 +74,15 @@ export function useData() {
       return result
     } else {
       // localStorage
+      console.log('➕ ADD - Sneaker received:', sneaker)
+      console.log('➕ ADD - listedOnPlatforms in sneaker:', sneaker.listedOnPlatforms)
+
       const data = loadData()
       const newSneaker = { ...sneaker, id: sneaker.id || generateId() }
+
+      console.log('➕ ADD - New sneaker after merge:', newSneaker)
+      console.log('➕ ADD - listedOnPlatforms in result:', newSneaker.listedOnPlatforms)
+
       data.sneakers = [newSneaker, ...data.sneakers]
       saveData(data)
       setSneakers(data.sneakers)
@@ -93,12 +100,21 @@ export function useData() {
       return result
     } else {
       const data = loadData()
+      console.log('🔧 UPDATE - Before:', data.sneakers.find(s => s.id === sneakerId))
+      console.log('🔧 UPDATE - Updates received:', updates)
+      console.log('🔧 UPDATE - listedOnPlatforms in updates:', updates.listedOnPlatforms)
+
       data.sneakers = data.sneakers.map(s =>
         s.id === sneakerId ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s
       )
+
+      const updated = data.sneakers.find(s => s.id === sneakerId)
+      console.log('🔧 UPDATE - After merge:', updated)
+      console.log('🔧 UPDATE - listedOnPlatforms in result:', updated?.listedOnPlatforms)
+
       saveData(data)
       setSneakers(data.sneakers)
-      return data.sneakers.find(s => s.id === sneakerId)
+      return updated
     }
   }, [userId, useCloud])
 

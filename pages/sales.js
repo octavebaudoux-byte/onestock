@@ -5,6 +5,7 @@ import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent } from 
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SaleCard from '../components/SaleCard'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -16,6 +17,7 @@ export default function Sales() {
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [timeRange, setTimeRange] = useState('all')
   const [modalMode, setModalMode] = useState('sale')
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
 
   // Filtrer les ventes
   const sales = useMemo(() => {
@@ -78,8 +80,12 @@ export default function Sales() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm(t('sales.deleteConfirm'))) {
-      await remove(id)
+    setConfirmDialog({ isOpen: true, id })
+  }
+
+  const confirmDelete = async () => {
+    if (confirmDialog.id) {
+      await remove(confirmDialog.id)
     }
   }
 

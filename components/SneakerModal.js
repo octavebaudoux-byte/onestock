@@ -187,6 +187,11 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const handleSubmit = (e) => {
     e.preventDefault()
 
+    console.log('📝 FormData before save:', {
+      listedOnPlatforms: formData.listedOnPlatforms,
+      fullFormData: formData
+    })
+
     const data = {
       ...formData,
       id: sneaker?.id || generateId(),
@@ -197,6 +202,11 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       createdAt: sneaker?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
+
+    console.log('💾 Data object being saved:', {
+      listedOnPlatforms: data.listedOnPlatforms,
+      fullData: data
+    })
 
     // Détecter si c'est une vente et s'il y avait des plateformes listées
     const wasListed = sneaker?.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0

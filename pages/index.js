@@ -5,6 +5,7 @@ import { Package, TrendingUp, Zap, Target, Flame, ArrowUpRight, Percent, Sparkle
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useExpenses } from '../hooks/useExpenses'
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
   const [animatedStats, setAnimatedStats] = useState({ profit: 0, stock: 0, sold: 0, value: 0 })
 
   const stats = calculateStats(sneakers)
@@ -59,8 +61,12 @@ export default function Dashboard() {
   }
 
   const handleDeleteSneaker = async (id) => {
-    if (confirm(t('dashboard.deleteConfirm'))) {
-      await remove(id)
+    setConfirmDialog({ isOpen: true, id })
+  }
+
+  const confirmDelete = async () => {
+    if (confirmDialog.id) {
+      await remove(confirmDialog.id)
     }
   }
 
@@ -367,6 +373,17 @@ export default function Dashboard() {
         onSave={handleSaveSneaker}
         sneaker={editingSneaker}
         mode={modalMode}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title={t('dashboard.deleteConfirm') || 'Supprimer cette paire ?'}
+        message="Cette action est irréversible. Toutes les données de cette paire seront définitivement supprimées."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        isDangerous={true}
       />
     </>
   )
