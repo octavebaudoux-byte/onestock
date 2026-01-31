@@ -244,7 +244,7 @@ export default function Calendar() {
                   <div
                     key={index}
                     onClick={() => handleDayClick(date)}
-                    className={`min-h-[100px] md:min-h-[120px] p-2 border-r border-b border-gray-700 last:border-r-0 transition-all ${
+                    className={`min-h-[70px] md:min-h-[80px] p-1.5 border-r border-b border-gray-700 last:border-r-0 transition-all ${
                       date
                         ? 'hover:bg-dark-700 cursor-pointer'
                         : 'bg-dark-900/50'
@@ -254,7 +254,7 @@ export default function Calendar() {
                   >
                     {date && (
                       <>
-                        <div className={`text-sm font-semibold mb-2 ${
+                        <div className={`text-xs font-semibold mb-1 ${
                           isTodayDate
                             ? 'text-blue-400'
                             : date.getMonth() !== currentDate.getMonth()
@@ -265,15 +265,15 @@ export default function Calendar() {
                         </div>
 
                         {/* Events for this day */}
-                        <div className="space-y-1">
-                          {dayEvents.slice(0, 3).map((event) => (
+                        <div className="space-y-0.5">
+                          {dayEvents.slice(0, 2).map((event) => (
                             <div
                               key={event.id}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleEditEvent(event, date)
                               }}
-                              className={`group relative px-2 py-1 rounded text-xs font-medium truncate ${categories[event.category].color} text-white hover:ring-2 hover:ring-white/50 transition-all`}
+                              className={`group relative px-1.5 py-0.5 rounded text-[10px] font-medium truncate ${categories[event.category].color} text-white hover:ring-1 hover:ring-white/50 transition-all`}
                             >
                               {event.time && <span className="mr-1">{event.time}</span>}
                               {event.title}
@@ -283,15 +283,15 @@ export default function Calendar() {
                                   e.stopPropagation()
                                   handleDeleteEvent(event.id)
                                 }}
-                                className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded transition-all"
+                                className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded transition-all"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-2.5 h-2.5" />
                               </button>
                             </div>
                           ))}
-                          {dayEvents.length > 3 && (
-                            <div className="text-xs text-gray-500 px-2">
-                              +{dayEvents.length - 3} {language === 'fr' ? 'autre(s)' : 'more'}
+                          {dayEvents.length > 2 && (
+                            <div className="text-[10px] text-gray-500 px-1">
+                              +{dayEvents.length - 2}
                             </div>
                           )}
                         </div>
