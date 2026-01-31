@@ -203,32 +203,48 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     const isBeingSold = data.status === 'sold'
     const soldPlatform = data.sellPlatform
 
+    console.log('🔍 Toast Debug:', {
+      wasListed,
+      isBeingSold,
+      soldPlatform,
+      originalPlatforms: sneaker?.listedOnPlatforms,
+      sneakerStatus: sneaker?.status,
+      newStatus: data.status,
+      mode
+    })
+
+    // Sauvegarder d'abord
+    onSave(data)
+    onClose()
+
+    // Afficher le toast APRÈS la fermeture de la modal
     if (isBeingSold && wasListed) {
       // Filtrer les plateformes où il faut retirer l'annonce (toutes sauf celle où vendu)
       const platformsToRemove = sneaker.listedOnPlatforms.filter(p => p !== soldPlatform)
 
+      console.log('🔔 Showing toast with platforms:', platformsToRemove)
+
       if (platformsToRemove.length > 0) {
-        // Afficher la notification toast
-        showToast({
-          message: '✅ Vente enregistrée !',
-          platforms: platformsToRemove,
-          onRemindLater: () => {
-            // Stocker un rappel dans localStorage
-            const reminders = JSON.parse(localStorage.getItem('platform_reminders') || '[]')
-            reminders.push({
-              sneakerId: data.id,
-              sneakerName: data.name,
-              platforms: platformsToRemove,
-              timestamp: new Date().toISOString()
-            })
-            localStorage.setItem('platform_reminders', JSON.stringify(reminders))
-          }
-        })
+        // Petit délai pour s'assurer que la modal est bien fermée
+        setTimeout(() => {
+          showToast({
+            message: '✅ Vente enregistrée !',
+            platforms: platformsToRemove,
+            onRemindLater: () => {
+              // Stocker un rappel dans localStorage
+              const reminders = JSON.parse(localStorage.getItem('platform_reminders') || '[]')
+              reminders.push({
+                sneakerId: data.id,
+                sneakerName: data.name,
+                platforms: platformsToRemove,
+                timestamp: new Date().toISOString()
+              })
+              localStorage.setItem('platform_reminders', JSON.stringify(reminders))
+            }
+          })
+        }, 100)
       }
     }
-
-    onSave(data)
-    onClose()
   }
 
   const handleChange = (e) => {

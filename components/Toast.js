@@ -6,7 +6,7 @@ export default function Toast({ message, platforms, onClose, onRemindLater, auto
     if (autoClose) {
       const timer = setTimeout(() => {
         onClose()
-      }, 8000) // 8 secondes pour laisser le temps de lire
+      }, 4000) // 4 secondes
 
       return () => clearTimeout(timer)
     }
