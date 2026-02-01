@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur d'icônes PWA</title>
+</head>
+<body>
+  <h1>Générateur d'icônes pour OneStock</h1>
+  <p>Télécharge ces images et place-les dans le dossier public/</p>
+  <canvas id="canvas192" width="192" height="192"></canvas>
+  <br>
+  <a id="download192">Télécharger icon-192.png</a>
+  <br><br>
+  <canvas id="canvas512" width="512" height="512"></canvas>
+  <br>
+  <a id="download512">Télécharger icon-512.png</a>
+
+  <script>
+    function createIcon(canvasId, size, downloadId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // Fond bleu
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, size, size);
+
+      // Texte blanc
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${size * 0.4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('OS', size / 2, size / 2);
+
+      // Téléchargement
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.getElementById(downloadId);
+        link.href = url;
+        link.download = `icon-${size}.png`;
+      });
+    }
+
+    createIcon('canvas192', 192, 'download192');
+    createIcon('canvas512', 512, 'download512');
+  </script>
+</body>
+</html>

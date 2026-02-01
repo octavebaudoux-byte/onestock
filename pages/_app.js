@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { WhopAuthProvider } from '../contexts/WhopAuthContext'
@@ -8,6 +9,20 @@ import { ToastProvider } from '../contexts/ToastContext'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
+
+  // Enregistrer le service worker pour la PWA
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('✅ PWA Service Worker enregistré')
+        })
+        .catch((error) => {
+          console.log('❌ Erreur Service Worker:', error)
+        })
+    }
+  }, [])
 
   return (
     <ThemeProvider>
