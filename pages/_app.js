@@ -1,7 +1,7 @@
 import '../styles/globals.css'
 import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
-import { WhopAuthProvider } from '../contexts/WhopAuthProvider'
+import { WhopAuthProvider } from '../contexts/WhopAuthContext'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import { LanguageProvider } from '../contexts/LanguageContext'
 import { ToastProvider } from '../contexts/ToastContext'
