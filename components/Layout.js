@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Logo from './Logo'
 import GlobalSearchHeader from './GlobalSearchHeader'
+import PageTransition from './PageTransition'
 import {
   LayoutDashboard,
   Package,
@@ -111,7 +112,9 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
       {/* Main content */}
       <main className="flex-1 overflow-auto md:ml-20 pb-20 md:pb-0">
         <GlobalSearchHeader />
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </main>
 
       {/* Mobile bottom navigation - icons only */}

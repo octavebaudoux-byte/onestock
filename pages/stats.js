@@ -166,6 +166,39 @@ export default function Stats() {
             </div>
           ) : (
             <>
+              {/* Stats cards - Duration and Rotation */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="card">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Durée moyenne en stock</p>
+                      <p className="text-3xl font-bold text-blue-400">
+                        {stats.avgStockDuration > 0 ? `${Math.round(stats.avgStockDuration)} jours` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Temps moyen entre achat et vente
+                      </p>
+                    </div>
+                    <div className="text-5xl">⏱️</div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Rotation (30 derniers jours)</p>
+                      <p className="text-3xl font-bold text-emerald-400">
+                        {stats.salesRotation} {stats.salesRotation > 1 ? 'ventes' : 'vente'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Nombre de paires vendues ce mois
+                      </p>
+                    </div>
+                    <div className="text-5xl">🔄</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Charts grid - Achats et Ventes/Profit séparés */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Achats en volumes (barres) */}

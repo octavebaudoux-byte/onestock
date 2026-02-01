@@ -61,6 +61,22 @@ export default function Sales() {
       return profit > bestProfit ? s : best
     }, null)
 
+    // Calculer la durée moyenne en stock
+    const salesWithDuration = sales.filter(s => s.buyDate && s.sellDate)
+    const avgStockDuration = salesWithDuration.length > 0
+      ? salesWithDuration.reduce((sum, s) => {
+          const buy = new Date(s.buyDate)
+          const sell = new Date(s.sellDate)
+          const days = Math.floor((sell - buy) / (1000 * 60 * 60 * 24))
+          return sum + days
+        }, 0) / salesWithDuration.length
+      : 0
+
+    // Calculer la rotation (ventes des 30 derniers jours)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const salesRotation = sales.filter(s => s.sellDate && new Date(s.sellDate) >= thirtyDaysAgo).length
+
     return {
       count: sales.length,
       totalRevenue,
@@ -70,6 +86,8 @@ export default function Sales() {
       avgProfit,
       avgROI,
       bestSale,
+      avgStockDuration,
+      salesRotation,
     }
   }, [sales])
 
@@ -152,7 +170,7 @@ export default function Sales() {
           </div>
 
           {/* Stats Cards avec style amélioré */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {/* Nombre de ventes */}
             <Link href="/stats" className="group relative bg-gradient-to-br from-blue-500/10 to-blue-600/20 border border-blue-500/30 rounded-2xl p-5 hover:border-blue-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20">
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -234,6 +252,39 @@ export default function Sales() {
                 )}
               </div>
             </Link>
+          </div>
+
+          {/* Duration and Rotation Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/20 border border-indigo-500/30 rounded-2xl p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-indigo-300/70 text-sm mb-2">
+                    <span className="text-lg">⏱️</span>
+                    Durée moyenne en stock
+                  </div>
+                  <div className="text-3xl font-black text-white">
+                    {salesStats.avgStockDuration > 0 ? `${Math.round(salesStats.avgStockDuration)} jours` : 'N/A'}
+                  </div>
+                  <div className="mt-1 text-xs text-indigo-400/60">Temps moyen entre achat et vente</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-teal-500/10 to-teal-600/20 border border-teal-500/30 rounded-2xl p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-teal-300/70 text-sm mb-2">
+                    <span className="text-lg">🔄</span>
+                    Rotation (30 derniers jours)
+                  </div>
+                  <div className="text-3xl font-black text-white">
+                    {salesStats.salesRotation} {salesStats.salesRotation > 1 ? 'ventes' : 'vente'}
+                  </div>
+                  <div className="mt-1 text-xs text-teal-400/60">Nombre de paires vendues ce mois</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Best sale */}
