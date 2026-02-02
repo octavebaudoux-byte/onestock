@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { Settings, Sun, Moon, Globe } from 'lucide-react'
+import { Settings, Sun, Moon, Globe, LogOut } from 'lucide-react'
 import Layout from '../components/Layout'
 import { loadData } from '../lib/store'
 import { useTheme } from '../contexts/ThemeContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useWhopAuth } from '../contexts/WhopAuthContext'
 
 export default function SettingsPage() {
   const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
   const [isLoaded, setIsLoaded] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { language, changeLanguage, t } = useLanguage()
+  const { logout } = useWhopAuth()
 
   useEffect(() => {
     const loaded = loadData()
@@ -156,6 +158,18 @@ export default function SettingsPage() {
             <p className="text-gray-400 text-sm">
               <span className="font-semibold">OneStock</span> - {language === 'fr' ? 'Gestion de stock sneakers' : 'Sneaker inventory management'}
             </p>
+          </div>
+
+          {/* Déconnexion */}
+          <div className="card p-6 mt-6">
+            <h3 className="text-lg font-semibold mb-4">{language === 'fr' ? 'Compte' : 'Account'}</h3>
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              {language === 'fr' ? 'Se déconnecter' : 'Logout'}
+            </button>
           </div>
         </div>
       </Layout>
