@@ -17,12 +17,12 @@ export default function Document() {
         <link rel="manifest" href="/manifest.json" />
 
         {/* Apple Touch Icons */}
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+        <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/logo.svg" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/logo.svg" />
 
         {/* Favicon */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png" />
+        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
       </Head>
       <body>
         <Main />

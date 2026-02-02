@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur d'icônes OneStock</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #f1f5f9;
+    }
+    h1 {
+      color: #1e293b;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      max-width: 800px;
+    }
+    canvas {
+      border: 1px solid #e2e8f0;
+      margin: 10px;
+    }
+    a {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      margin: 10px;
+      font-weight: 600;
+    }
+    a:hover {
+      background: #2563eb;
+    }
+    .preview {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Générateur d'icônes pour OneStock</h1>
+    <p>Téléchargez ces icônes et placez-les dans le dossier <strong>public/</strong></p>
+
+    <div class="preview">
+      <div>
+        <h3>icon-192.png</h3>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <br>
+        <a id="download192">⬇️ Télécharger icon-192.png</a>
+      </div>
+
+      <div>
+        <h3>icon-512.png</h3>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <br>
+        <a id="download512">⬇️ Télécharger icon-512.png</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const svgCode = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="main-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="#ffffff"/>
+
+  <g transform="translate(256, 200)">
+    <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 L -70,40 L -70,-40 Z"
+          fill="url(#main-gradient)"
+          opacity="0.1"/>
+
+    <path d="M 0,-60 L 52,-30 L 52,30 L 0,60 L -52,30 L -52,-30 Z"
+          fill="none"
+          stroke="url(#main-gradient)"
+          stroke-width="3"/>
+
+    <g transform="translate(-50, -15)">
+      <path d="M 20,0 L 80,0 Q 90,0 95,8 L 100,25 L 15,25 Q 10,25 10,20 Z"
+            fill="url(#main-gradient)"/>
+
+      <path d="M 30,8 L 75,8 Q 85,8 88,15"
+            fill="none"
+            stroke="url(#accent-gradient)"
+            stroke-width="4"
+            stroke-linecap="round"/>
+
+      <circle cx="85" cy="15" r="3" fill="#3b82f6"/>
+      <circle cx="75" cy="18" r="2" fill="#60a5fa"/>
+    </g>
+  </g>
+
+  <g opacity="0.15">
+    <circle cx="256" cy="200" r="120" fill="none" stroke="#1e40af" stroke-width="1"/>
+    <circle cx="256" cy="200" r="140" fill="none" stroke="#1e40af" stroke-width="0.5"/>
+  </g>
+
+  <circle cx="186" cy="160" r="4" fill="#3b82f6" opacity="0.4"/>
+  <circle cx="326" cy="160" r="4" fill="#3b82f6" opacity="0.4"/>
+  <circle cx="186" cy="240" r="4" fill="#3b82f6" opacity="0.4"/>
+  <circle cx="326" cy="240" r="4" fill="#3b82f6" opacity="0.4"/>
+
+  <line x1="186" y1="160" x2="256" y2="140" stroke="#1e40af" stroke-width="1" opacity="0.2"/>
+  <line x1="326" y1="160" x2="256" y2="140" stroke="#1e40af" stroke-width="1" opacity="0.2"/>
+
+  <text x="256" y="370"
+        font-family="Arial, -apple-system, sans-serif"
+        font-size="52"
+        font-weight="700"
+        text-anchor="middle"
+        fill="url(#main-gradient)"
+        letter-spacing="2">OneStock</text>
+
+  <text x="256" y="400"
+        font-family="Arial, sans-serif"
+        font-size="14"
+        font-weight="400"
+        text-anchor="middle"
+        fill="#64748b"
+        letter-spacing="4">STOCK MANAGER</text>
+</svg>`;
+
+    function createIcon(canvasId, size, downloadId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // Créer une image depuis le SVG
+      const img = new Image();
+      const blob = new Blob([svgCode], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      img.onload = function() {
+        // Dessiner l'image sur le canvas
+        ctx.drawImage(img, 0, 0, size, size);
+
+        // Créer le lien de téléchargement
+        canvas.toBlob((blob) => {
+          const downloadUrl = URL.createObjectURL(blob);
+          const link = document.getElementById(downloadId);
+          link.href = downloadUrl;
+          link.download = `icon-${size}.png`;
+        });
+
+        URL.revokeObjectURL(url);
+      };
+
+      img.src = url;
+    }
+
+    // Générer les deux tailles
+    createIcon('canvas192', 192, 'download192');
+    createIcon('canvas512', 512, 'download512');
+  </script>
+</body>
+</html>
