@@ -10,11 +10,43 @@ const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','A
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 const RECURRENCE_OPTIONS = [
-  { value: 'none', labelFr: 'Aucune', labelEn: 'None' },
+  { value: 'none', labelFr: 'Unique', labelEn: 'One-time' },
   { value: 'monthly', labelFr: 'Mensuelle', labelEn: 'Monthly' },
   { value: 'weekly', labelFr: 'Hebdomadaire', labelEn: 'Weekly' },
   { value: 'yearly', labelFr: 'Annuelle', labelEn: 'Yearly' },
 ]
+
+// Helper: calculer le nombre de mois entre deux dates
+function monthsDiff(start, end) {
+  const s = new Date(start)
+  const e = new Date(end)
+  return (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1
+}
+
+// Helper: calculer le total d'une dépense récurrente
+function getRecurringTotal(expense) {
+  if (expense.recurrence === 'none' || !expense.recurrence) {
+    return expense.amount
+  }
+
+  const now = new Date()
+  const startDate = new Date(expense.date)
+  const endDate = expense.recurrenceEndDate ? new Date(expense.recurrenceEndDate) : now
+
+  // Si la date de fin est dans le futur et indéfini, calculer jusqu'à maintenant
+  const calcEnd = endDate > now ? now : endDate
+
+  let occurrences = 1
+  if (expense.recurrence === 'monthly') {
+    occurrences = monthsDiff(startDate, calcEnd)
+  } else if (expense.recurrence === 'weekly') {
+    occurrences = Math.ceil((calcEnd - startDate) / (7 * 24 * 60 * 60 * 1000)) + 1
+  } else if (expense.recurrence === 'yearly') {
+    occurrences = calcEnd.getFullYear() - startDate.getFullYear() + 1
+  }
+
+  return expense.amount * Math.max(1, occurrences)
+}
 
 export default function ExpensesPage() {
   const { expenses, add, update, remove } = useExpenses()
@@ -30,7 +62,8 @@ export default function ExpensesPage() {
     category: 'Autre',
     notes: '',
     recurrence: 'none',
-    recurrenceDuration: 1,
+    recurrenceEndDate: '',
+    isIndefinite: false,
   })
 
   // Filtrage
@@ -52,21 +85,46 @@ export default function ExpensesPage() {
     return result
   }, [expenses, filterMonth, filterCategory])
 
-  // Stats
+  // Stats - avec calcul des récurrents
   const stats = useMemo(() => {
     const now = new Date()
-    const thisMonth = expenses.filter(e => {
-      const d = new Date(e.date)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+    // Pour ce mois: inclure les dépenses récurrentes actives
+    let totalThisMonth = 0
+    expenses.forEach(e => {
+      const expenseDate = new Date(e.date)
+      const endDate = e.recurrenceEndDate ? new Date(e.recurrenceEndDate) : null
+
+      if (e.recurrence === 'none' || !e.recurrence) {
+        // Dépense unique - compte si dans ce mois
+        if (expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear()) {
+          totalThisMonth += parseFloat(e.amount) || 0
+        }
+      } else {
+        // Dépense récurrente - compte si active ce mois
+        const isActiveThisMonth = expenseDate <= thisMonthEnd && (e.isIndefinite || !endDate || endDate >= thisMonthStart)
+        if (isActiveThisMonth) {
+          if (e.recurrence === 'monthly') {
+            totalThisMonth += parseFloat(e.amount) || 0
+          } else if (e.recurrence === 'weekly') {
+            totalThisMonth += (parseFloat(e.amount) || 0) * 4 // ~4 semaines par mois
+          } else if (e.recurrence === 'yearly' && expenseDate.getMonth() === now.getMonth()) {
+            totalThisMonth += parseFloat(e.amount) || 0
+          }
+        }
+      }
     })
-    const totalThisMonth = thisMonth.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
-    const totalAll = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
-    const totalFiltered = filteredExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+
+    // Total cumulé (avec récurrents)
+    const totalAll = expenses.reduce((sum, e) => sum + getRecurringTotal(e), 0)
+    const totalFiltered = filteredExpenses.reduce((sum, e) => sum + getRecurringTotal(e), 0)
 
     // Par catégorie
     const byCategory = {}
     filteredExpenses.forEach(e => {
-      byCategory[e.category] = (byCategory[e.category] || 0) + (parseFloat(e.amount) || 0)
+      byCategory[e.category] = (byCategory[e.category] || 0) + getRecurringTotal(e)
     })
 
     return { totalThisMonth, totalAll, totalFiltered, byCategory }
@@ -94,7 +152,8 @@ export default function ExpensesPage() {
       category: 'Autre',
       notes: '',
       recurrence: 'none',
-      recurrenceDuration: 1,
+      recurrenceEndDate: '',
+      isIndefinite: false,
     })
     setShowForm(false)
     setEditingId(null)
@@ -104,42 +163,21 @@ export default function ExpensesPage() {
     e.preventDefault()
     if (!form.name || !form.amount) return
 
-    const baseExpense = {
-      ...form,
+    const expense = {
+      name: form.name,
       amount: parseFloat(form.amount),
-      recurrenceDuration: parseInt(form.recurrenceDuration) || 1,
+      date: form.date,
+      category: form.category,
+      notes: form.notes,
+      recurrence: form.recurrence,
+      recurrenceEndDate: form.isIndefinite ? null : (form.recurrenceEndDate || null),
+      isIndefinite: form.recurrence !== 'none' ? form.isIndefinite : false,
     }
 
     if (editingId) {
-      update(editingId, baseExpense)
+      update(editingId, expense)
     } else {
-      // Si récurrent, créer plusieurs dépenses
-      if (form.recurrence !== 'none' && form.recurrenceDuration > 1) {
-        const startDate = new Date(form.date)
-
-        for (let i = 0; i < parseInt(form.recurrenceDuration); i++) {
-          const expenseDate = new Date(startDate)
-
-          if (form.recurrence === 'monthly') {
-            expenseDate.setMonth(expenseDate.getMonth() + i)
-          } else if (form.recurrence === 'weekly') {
-            expenseDate.setDate(expenseDate.getDate() + (i * 7))
-          } else if (form.recurrence === 'yearly') {
-            expenseDate.setFullYear(expenseDate.getFullYear() + i)
-          }
-
-          await add({
-            ...baseExpense,
-            date: expenseDate.toISOString().split('T')[0],
-            name: `${form.name} (${i + 1}/${form.recurrenceDuration})`,
-            isRecurring: true,
-            recurrenceIndex: i,
-            recurrenceTotal: parseInt(form.recurrenceDuration),
-          })
-        }
-      } else {
-        add(baseExpense)
-      }
+      add(expense)
     }
     resetForm()
   }
@@ -152,7 +190,8 @@ export default function ExpensesPage() {
       category: expense.category || 'Autre',
       notes: expense.notes || '',
       recurrence: expense.recurrence || 'none',
-      recurrenceDuration: expense.recurrenceDuration || 1,
+      recurrenceEndDate: expense.recurrenceEndDate?.split('T')[0] || '',
+      isIndefinite: expense.isIndefinite || false,
     })
     setEditingId(expense.id)
     setShowForm(true)
@@ -272,51 +311,73 @@ export default function ExpensesPage() {
                 </div>
 
                 {/* Récurrence */}
-                {!editingId && (
-                  <div className="md:col-span-2 p-4 bg-dark-700 rounded-xl border border-blue-500/20">
-                    <div className="flex items-center gap-2 mb-3">
-                      <RefreshCw className="w-4 h-4 text-blue-400" />
-                      <span className="font-medium text-sm">{language === 'fr' ? 'Dépense récurrente' : 'Recurring expense'}</span>
+                <div className="md:col-span-2 p-4 bg-dark-700 rounded-xl border border-blue-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <RefreshCw className="w-4 h-4 text-blue-400" />
+                    <span className="font-medium text-sm">{language === 'fr' ? 'Récurrence' : 'Recurrence'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">{language === 'fr' ? 'Fréquence' : 'Frequency'}</label>
+                      <select
+                        value={form.recurrence}
+                        onChange={e => setForm(p => ({ ...p, recurrence: e.target.value, isIndefinite: e.target.value === 'none' ? false : p.isIndefinite }))}
+                        className="w-full"
+                      >
+                        {RECURRENCE_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {language === 'fr' ? opt.labelFr : opt.labelEn}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    {form.recurrence !== 'none' && (
                       <div>
-                        <label className="block text-sm text-gray-400 mb-1">{language === 'fr' ? 'Fréquence' : 'Frequency'}</label>
-                        <select
-                          value={form.recurrence}
-                          onChange={e => setForm(p => ({ ...p, recurrence: e.target.value }))}
-                          className="w-full"
-                        >
-                          {RECURRENCE_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>
-                              {language === 'fr' ? opt.labelFr : opt.labelEn}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {form.recurrence !== 'none' && (
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-1">{language === 'fr' ? 'Durée (nombre de fois)' : 'Duration (times)'}</label>
+                        <label className="block text-sm text-gray-400 mb-1">{language === 'fr' ? 'Date de fin' : 'End date'}</label>
+                        {form.isIndefinite ? (
+                          <div className="w-full px-3 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-blue-400 text-sm">
+                            ∞ {language === 'fr' ? 'Indéfini' : 'Indefinite'}
+                          </div>
+                        ) : (
                           <input
-                            type="number"
-                            min="1"
-                            max="60"
-                            value={form.recurrenceDuration}
-                            onChange={e => setForm(p => ({ ...p, recurrenceDuration: e.target.value }))}
+                            type="date"
+                            value={form.recurrenceEndDate}
+                            onChange={e => setForm(p => ({ ...p, recurrenceEndDate: e.target.value }))}
+                            min={form.date}
                             className="w-full"
                           />
-                        </div>
-                      )}
-                    </div>
-                    {form.recurrence !== 'none' && form.recurrenceDuration > 1 && (
-                      <div className="mt-3 text-sm text-blue-400 bg-blue-500/10 px-3 py-2 rounded-lg">
-                        {language === 'fr'
-                          ? `${form.recurrenceDuration} dépenses de ${formatPrice(parseFloat(form.amount) || 0)} seront créées = ${formatPrice((parseFloat(form.amount) || 0) * form.recurrenceDuration)} total`
-                          : `${form.recurrenceDuration} expenses of ${formatPrice(parseFloat(form.amount) || 0)} will be created = ${formatPrice((parseFloat(form.amount) || 0) * form.recurrenceDuration)} total`
-                        }
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                  {form.recurrence !== 'none' && (
+                    <div className="mt-3">
+                      <label
+                        className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          form.isIndefinite
+                            ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                            : 'bg-dark-600 border-gray-600 text-gray-400 hover:border-gray-500'
+                        }`}
+                        onClick={() => setForm(p => ({ ...p, isIndefinite: !p.isIndefinite, recurrenceEndDate: '' }))}
+                      >
+                        <div className={`w-10 h-5 rounded-full p-0.5 transition-colors ${form.isIndefinite ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                          <div className={`w-4 h-4 rounded-full bg-white transition-transform ${form.isIndefinite ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </div>
+                        <span className="text-sm font-medium">
+                          {language === 'fr' ? 'Dépense indéfinie (sans date de fin)' : 'Indefinite expense (no end date)'}
+                        </span>
+                      </label>
+                    </div>
+                  )}
+                  {form.recurrence !== 'none' && (
+                    <div className="mt-3 text-sm text-blue-400 bg-blue-500/10 px-3 py-2 rounded-lg">
+                      {language === 'fr'
+                        ? `${formatPrice(parseFloat(form.amount) || 0)} / ${form.recurrence === 'monthly' ? 'mois' : form.recurrence === 'weekly' ? 'semaine' : 'an'}${form.isIndefinite ? ' (indéfini)' : form.recurrenceEndDate ? ` jusqu'au ${new Date(form.recurrenceEndDate).toLocaleDateString('fr-FR')}` : ''}`
+                        : `${formatPrice(parseFloat(form.amount) || 0)} / ${form.recurrence === 'monthly' ? 'month' : form.recurrence === 'weekly' ? 'week' : 'year'}${form.isIndefinite ? ' (indefinite)' : form.recurrenceEndDate ? ` until ${new Date(form.recurrenceEndDate).toLocaleDateString('en-US')}` : ''}`
+                      }
+                    </div>
+                  )}
+                </div>
 
                 <div className="md:col-span-2 flex gap-3">
                   <button type="submit" className="btn btn-primary flex items-center gap-2">
@@ -392,15 +453,24 @@ export default function ExpensesPage() {
                     <div className="min-w-0">
                       <div className="font-medium truncate flex items-center gap-2">
                         {expense.name}
-                        {expense.isRecurring && (
+                        {expense.recurrence && expense.recurrence !== 'none' && (
                           <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <RefreshCw className="w-3 h-3" />
-                            {expense.recurrenceIndex + 1}/{expense.recurrenceTotal}
+                            {expense.recurrence === 'monthly' ? (language === 'fr' ? '/mois' : '/mo') :
+                             expense.recurrence === 'weekly' ? (language === 'fr' ? '/sem' : '/wk') :
+                             (language === 'fr' ? '/an' : '/yr')}
+                            {expense.isIndefinite && ' ∞'}
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-400 flex items-center gap-2">
+                      <div className="text-sm text-gray-400 flex items-center gap-2 flex-wrap">
                         <span>{formatDate(expense.date)}</span>
+                        {expense.recurrence && expense.recurrence !== 'none' && !expense.isIndefinite && expense.recurrenceEndDate && (
+                          <>
+                            <span className="text-gray-600">→</span>
+                            <span>{formatDate(expense.recurrenceEndDate)}</span>
+                          </>
+                        )}
                         <span className="text-gray-600">•</span>
                         <span className="text-orange-400/70">{expense.category}</span>
                         {expense.notes && (
@@ -413,9 +483,23 @@ export default function ExpensesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-orange-400 whitespace-nowrap">
-                      -{formatPrice(expense.amount)}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-orange-400 whitespace-nowrap">
+                        -{formatPrice(expense.amount)}
+                        {expense.recurrence && expense.recurrence !== 'none' && (
+                          <span className="text-xs text-gray-500 font-normal">
+                            /{expense.recurrence === 'monthly' ? (language === 'fr' ? 'mois' : 'mo') :
+                              expense.recurrence === 'weekly' ? (language === 'fr' ? 'sem' : 'wk') :
+                              (language === 'fr' ? 'an' : 'yr')}
+                          </span>
+                        )}
+                      </span>
+                      {expense.recurrence && expense.recurrence !== 'none' && (
+                        <div className="text-xs text-gray-500">
+                          {language === 'fr' ? 'Total:' : 'Total:'} {formatPrice(getRecurringTotal(expense))}
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleEdit(expense)}
                       className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
