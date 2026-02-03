@@ -38,6 +38,12 @@ CREATE TRIGGER update_accounts_updated_at
 -- Row Level Security (RLS)
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 
+-- Supprimer les policies existantes si elles existent
+DROP POLICY IF EXISTS "Users can view own accounts" ON accounts;
+DROP POLICY IF EXISTS "Users can insert own accounts" ON accounts;
+DROP POLICY IF EXISTS "Users can update own accounts" ON accounts;
+DROP POLICY IF EXISTS "Users can delete own accounts" ON accounts;
+
 -- Policy: Les utilisateurs peuvent voir uniquement leurs propres comptes
 CREATE POLICY "Users can view own accounts"
   ON accounts FOR SELECT
