@@ -1,7 +1,7 @@
-// Accounts Page - Gestion des comptes emails par groupe
+// Accounts Page - Gestion des comptes emails par groupe (format CSV: email,password)
 import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
-import { User, Plus, Search, Upload, X, Copy, Check, Trash2 } from 'lucide-react'
+import { User, Plus, Search, Upload, X, Copy, Check, Trash2, Eye, EyeOff } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -21,7 +21,9 @@ export default function AccountsPage() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [importText, setImportText] = useState('')
   const [importing, setImporting] = useState(false)
-  const [copiedEmail, setCopiedEmail] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
+  const [copiedField, setCopiedField] = useState(null)
+  const [showPasswords, setShowPasswords] = useState(false)
 
   // Formulaire nouveau groupe
   const [newGroupName, setNewGroupName] = useState('')
@@ -52,13 +54,14 @@ export default function AccountsPage() {
       if (!groupMap[groupName]) {
         groupMap[groupName] = {
           name: groupName,
-          emails: [],
+          items: [],
           createdAt: account.createdAt
         }
       }
-      groupMap[groupName].emails.push({
+      groupMap[groupName].items.push({
         id: account.id,
         email: account.email,
+        password: account.password || '',
         createdAt: account.createdAt
       })
     })
@@ -71,7 +74,7 @@ export default function AccountsPage() {
     const term = searchTerm.toLowerCase()
     return groups.filter(group =>
       group.name.toLowerCase().includes(term) ||
-      group.emails.some(e => e.email.toLowerCase().includes(term))
+      group.items.some(e => e.email.toLowerCase().includes(term))
     )
   }, [groups, searchTerm])
 
@@ -82,29 +85,16 @@ export default function AccountsPage() {
       return
     }
 
-    // On crée un compte "placeholder" pour créer le groupe
-    const newAccount = await addAccount(user.id, {
-      groupName: newGroupName.trim(),
-      site: newGroupName.trim(),
-      email: 'placeholder@group.create',
-      password: '-'
-    })
-
-    if (newAccount) {
-      setAccounts([newAccount, ...accounts])
-      showToast(language === 'fr' ? 'Groupe créé' : 'Group created', 'success')
-      setShowAddModal(false)
-      setNewGroupName('')
-      // Ouvrir directement le groupe pour ajouter des emails
-      setSelectedGroup(newGroupName.trim())
-      setShowImportModal(true)
-    }
+    setShowAddModal(false)
+    setSelectedGroup(newGroupName.trim())
+    setShowImportModal(true)
+    setNewGroupName('')
   }
 
-  // Importer des emails dans un groupe
-  async function handleImportEmails() {
+  // Importer des comptes dans un groupe (format CSV: email,password ou email;password)
+  async function handleImportAccounts() {
     if (!importText.trim() || !selectedGroup) {
-      showToast(language === 'fr' ? 'Veuillez entrer des emails' : 'Please enter emails', 'error')
+      showToast(language === 'fr' ? 'Veuillez entrer des comptes' : 'Please enter accounts', 'error')
       return
     }
 
@@ -115,10 +105,31 @@ export default function AccountsPage() {
       let errorCount = 0
 
       for (const line of lines) {
-        const email = line.trim()
-        if (!email || email === 'placeholder@group.create') continue
+        const trimmedLine = line.trim()
+        if (!trimmedLine || trimmedLine === 'placeholder@group.create') continue
 
-        // Vérifier que c'est un email valide
+        // Parser le format CSV: email,password ou email;password ou email\tpassword
+        let email = ''
+        let password = ''
+
+        if (trimmedLine.includes(',')) {
+          const parts = trimmedLine.split(',')
+          email = parts[0].trim()
+          password = parts.slice(1).join(',').trim()
+        } else if (trimmedLine.includes(';')) {
+          const parts = trimmedLine.split(';')
+          email = parts[0].trim()
+          password = parts.slice(1).join(';').trim()
+        } else if (trimmedLine.includes('\t')) {
+          const parts = trimmedLine.split('\t')
+          email = parts[0].trim()
+          password = parts.slice(1).join('\t').trim()
+        } else {
+          // Juste un email sans password
+          email = trimmedLine
+          password = ''
+        }
+
         if (!email.includes('@')) {
           errorCount++
           continue
@@ -129,7 +140,7 @@ export default function AccountsPage() {
             groupName: selectedGroup,
             site: selectedGroup,
             email: email,
-            password: '-'
+            password: password || '-'
           })
           if (newAccount) {
             successCount++
@@ -145,12 +156,12 @@ export default function AccountsPage() {
       if (successCount > 0) {
         showToast(
           language === 'fr'
-            ? `${successCount} email(s) ajouté(s)${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`
-            : `${successCount} email(s) added${errorCount > 0 ? `, ${errorCount} error(s)` : ''}`,
+            ? `${successCount} compte(s) ajouté(s)${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`
+            : `${successCount} account(s) added${errorCount > 0 ? `, ${errorCount} error(s)` : ''}`,
           errorCount > 0 ? 'warning' : 'success'
         )
       } else {
-        showToast(language === 'fr' ? 'Aucun email ajouté' : 'No emails added', 'error')
+        showToast(language === 'fr' ? 'Aucun compte ajouté' : 'No accounts added', 'error')
       }
 
       setShowImportModal(false)
@@ -161,13 +172,13 @@ export default function AccountsPage() {
     setImporting(false)
   }
 
-  // Supprimer un email
-  async function handleDeleteEmail(emailId) {
+  // Supprimer un compte
+  async function handleDeleteAccount(accountId) {
     try {
-      const success = await deleteAccount(user.id, emailId)
+      const success = await deleteAccount(user.id, accountId)
       if (success) {
-        setAccounts(accounts.filter(a => a.id !== emailId))
-        showToast(language === 'fr' ? 'Email supprimé' : 'Email deleted', 'success')
+        setAccounts(accounts.filter(a => a.id !== accountId))
+        showToast(language === 'fr' ? 'Compte supprimé' : 'Account deleted', 'success')
       }
     } catch (error) {
       showToast(language === 'fr' ? 'Erreur' : 'Error', 'error')
@@ -176,7 +187,7 @@ export default function AccountsPage() {
 
   // Supprimer un groupe entier
   async function handleDeleteGroup(groupName) {
-    if (!confirm(language === 'fr' ? `Supprimer le groupe "${groupName}" et tous ses emails ?` : `Delete group "${groupName}" and all its emails?`)) return
+    if (!confirm(language === 'fr' ? `Supprimer le groupe "${groupName}" et tous ses comptes ?` : `Delete group "${groupName}" and all its accounts?`)) return
 
     const groupAccounts = accounts.filter(a => a.groupName === groupName)
     let successCount = 0
@@ -188,31 +199,35 @@ export default function AccountsPage() {
 
     setAccounts(accounts.filter(a => a.groupName !== groupName))
     setSelectedGroup(null)
-    showToast(language === 'fr' ? `${successCount} email(s) supprimé(s)` : `${successCount} email(s) deleted`, 'success')
+    showToast(language === 'fr' ? `${successCount} compte(s) supprimé(s)` : `${successCount} account(s) deleted`, 'success')
   }
 
-  // Copier email
-  async function copyEmail(email) {
+  // Copier un champ
+  async function copyField(id, field, value) {
     try {
-      await navigator.clipboard.writeText(email)
-      setCopiedEmail(email)
+      await navigator.clipboard.writeText(value)
+      setCopiedId(id)
+      setCopiedField(field)
       showToast(language === 'fr' ? 'Copié' : 'Copied', 'success')
-      setTimeout(() => setCopiedEmail(null), 2000)
+      setTimeout(() => {
+        setCopiedId(null)
+        setCopiedField(null)
+      }, 2000)
     } catch (error) {
       showToast(language === 'fr' ? 'Erreur' : 'Error', 'error')
     }
   }
 
-  // Copier tous les emails d'un groupe
-  async function copyAllEmails(group) {
-    const emailList = group.emails
+  // Copier tous les comptes d'un groupe (format CSV)
+  async function copyAllAccounts(group) {
+    const csvContent = group.items
       .filter(e => e.email !== 'placeholder@group.create')
-      .map(e => e.email)
+      .map(e => `${e.email},${e.password}`)
       .join('\n')
 
     try {
-      await navigator.clipboard.writeText(emailList)
-      showToast(language === 'fr' ? `${group.emails.length} email(s) copié(s)` : `${group.emails.length} email(s) copied`, 'success')
+      await navigator.clipboard.writeText(csvContent)
+      showToast(language === 'fr' ? `${group.items.length} compte(s) copié(s)` : `${group.items.length} account(s) copied`, 'success')
     } catch (error) {
       showToast(language === 'fr' ? 'Erreur' : 'Error', 'error')
     }
@@ -244,7 +259,7 @@ export default function AccountsPage() {
               <div>
                 <h1 className="text-3xl font-bold">{language === 'fr' ? 'Mes Comptes' : 'My Accounts'}</h1>
                 <p className="text-gray-400">
-                  {groups.length} {language === 'fr' ? 'groupes' : 'groups'} · {accounts.filter(a => a.email !== 'placeholder@group.create').length} emails
+                  {groups.length} {language === 'fr' ? 'groupes' : 'groups'} · {accounts.filter(a => a.email !== 'placeholder@group.create').length} {language === 'fr' ? 'comptes' : 'accounts'}
                 </p>
               </div>
             </div>
@@ -284,7 +299,7 @@ export default function AccountsPage() {
               </div>
             ) : (
               filteredGroups.map((group) => {
-                const emailCount = group.emails.filter(e => e.email !== 'placeholder@group.create').length
+                const accountCount = group.items.filter(e => e.email !== 'placeholder@group.create').length
                 return (
                   <div
                     key={group.name}
@@ -295,10 +310,10 @@ export default function AccountsPage() {
                       <h3 className="font-bold text-lg text-white truncate">{group.name}</h3>
                     </div>
                     <div className="text-3xl font-bold text-blue-400 mb-2">
-                      {emailCount}
+                      {accountCount}
                     </div>
                     <p className="text-sm text-gray-400">
-                      {language === 'fr' ? 'emails' : 'emails'}
+                      {language === 'fr' ? 'comptes' : 'accounts'}
                     </p>
                   </div>
                 )
@@ -353,25 +368,32 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {/* Modal Détail du groupe (liste des emails) */}
+      {/* Modal Détail du groupe (liste des comptes en 2 colonnes) */}
       {selectedGroup && currentGroup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="card max-w-2xl w-full max-h-[90vh] flex flex-col">
+          <div className="card max-w-4xl w-full max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="p-6 border-b border-dark-700 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">{selectedGroup}</h2>
                 <p className="text-gray-400 text-sm">
-                  {currentGroup.emails.filter(e => e.email !== 'placeholder@group.create').length} emails
+                  {currentGroup.items.filter(e => e.email !== 'placeholder@group.create').length} {language === 'fr' ? 'comptes' : 'accounts'}
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => copyAllEmails(currentGroup)}
+                  onClick={() => setShowPasswords(!showPasswords)}
+                  className="btn btn-secondary flex items-center gap-2"
+                >
+                  {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPasswords ? (language === 'fr' ? 'Masquer' : 'Hide') : (language === 'fr' ? 'Afficher' : 'Show')}
+                </button>
+                <button
+                  onClick={() => copyAllAccounts(currentGroup)}
                   className="btn btn-secondary flex items-center gap-2"
                 >
                   <Copy className="w-4 h-4" />
-                  {language === 'fr' ? 'Copier tout' : 'Copy all'}
+                  {language === 'fr' ? 'Copier CSV' : 'Copy CSV'}
                 </button>
                 <button
                   onClick={() => setShowImportModal(true)}
@@ -389,42 +411,75 @@ export default function AccountsPage() {
               </div>
             </div>
 
-            {/* Liste des emails */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-2">
-                {currentGroup.emails
+            {/* En-tête colonnes */}
+            <div className="px-6 py-3 border-b border-dark-700 bg-dark-800">
+              <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-400">
+                <div className="col-span-5">{language === 'fr' ? 'Email' : 'Email'}</div>
+                <div className="col-span-5">{language === 'fr' ? 'Mot de passe' : 'Password'}</div>
+                <div className="col-span-2 text-right">{language === 'fr' ? 'Actions' : 'Actions'}</div>
+              </div>
+            </div>
+
+            {/* Liste des comptes en 2 colonnes */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-dark-700">
+                {currentGroup.items
                   .filter(e => e.email !== 'placeholder@group.create')
-                  .map((emailObj) => (
+                  .map((item) => (
                     <div
-                      key={emailObj.id}
-                      className="flex items-center gap-3 bg-dark-700 rounded-lg px-4 py-3 group"
+                      key={item.id}
+                      className="grid grid-cols-12 gap-4 px-6 py-3 hover:bg-dark-700/50 group items-center"
                     >
-                      <span className="flex-1 font-mono text-sm text-gray-300 truncate">
-                        {emailObj.email}
-                      </span>
-                      <button
-                        onClick={() => copyEmail(emailObj.email)}
-                        className="p-2 hover:bg-dark-600 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        {copiedEmail === emailObj.email ? (
-                          <Check className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEmail(emailObj.id)}
-                        className="p-2 hover:bg-red-600/20 text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Email */}
+                      <div className="col-span-5 flex items-center gap-2">
+                        <span className="font-mono text-sm text-gray-300 truncate flex-1">
+                          {item.email}
+                        </span>
+                        <button
+                          onClick={() => copyField(item.id, 'email', item.email)}
+                          className="p-1.5 hover:bg-dark-600 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          {copiedId === item.id && copiedField === 'email' ? (
+                            <Check className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Password */}
+                      <div className="col-span-5 flex items-center gap-2">
+                        <span className="font-mono text-sm text-gray-300 truncate flex-1">
+                          {showPasswords ? (item.password || '-') : '••••••••'}
+                        </span>
+                        <button
+                          onClick={() => copyField(item.id, 'password', item.password || '')}
+                          className="p-1.5 hover:bg-dark-600 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          {copiedId === item.id && copiedField === 'password' ? (
+                            <Check className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="col-span-2 flex justify-end">
+                        <button
+                          onClick={() => handleDeleteAccount(item.id)}
+                          className="p-1.5 hover:bg-red-600/20 text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
               </div>
 
-              {currentGroup.emails.filter(e => e.email !== 'placeholder@group.create').length === 0 && (
+              {currentGroup.items.filter(e => e.email !== 'placeholder@group.create').length === 0 && (
                 <div className="text-center py-12 text-gray-400">
-                  {language === 'fr' ? 'Aucun email. Cliquez sur "Ajouter" pour importer des emails.' : 'No emails. Click "Add" to import emails.'}
+                  {language === 'fr' ? 'Aucun compte. Cliquez sur "Ajouter" pour importer des comptes.' : 'No accounts. Click "Add" to import accounts.'}
                 </div>
               )}
             </div>
@@ -443,19 +498,24 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {/* Modal Import d'emails */}
+      {/* Modal Import de comptes (format CSV) */}
       {showImportModal && selectedGroup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="card max-w-xl w-full p-6">
+          <div className="card max-w-2xl w-full p-6">
             <h2 className="text-2xl font-bold mb-4">
-              {language === 'fr' ? `Ajouter des emails à "${selectedGroup}"` : `Add emails to "${selectedGroup}"`}
+              {language === 'fr' ? `Ajouter des comptes à "${selectedGroup}"` : `Add accounts to "${selectedGroup}"`}
             </h2>
 
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 mb-2">
                 {language === 'fr'
-                  ? 'Collez vos emails, un par ligne:'
-                  : 'Paste your emails, one per line:'}
+                  ? 'Format CSV : email,password (un compte par ligne)'
+                  : 'CSV format: email,password (one account per line)'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {language === 'fr'
+                  ? 'Séparateurs acceptés : virgule (,) point-virgule (;) ou tabulation'
+                  : 'Accepted separators: comma (,) semicolon (;) or tab'}
               </p>
             </div>
 
@@ -464,8 +524,8 @@ export default function AccountsPage() {
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 placeholder={language === 'fr'
-                  ? 'exemple1@icloud.com\nexemple2@icloud.com\nexemple3@icloud.com'
-                  : 'example1@icloud.com\nexample2@icloud.com\nexample3@icloud.com'}
+                  ? 'exemple1@icloud.com,motdepasse123\nexemple2@icloud.com,password456\nexemple3@icloud.com,secret789'
+                  : 'example1@icloud.com,password123\nexample2@icloud.com,password456\nexample3@icloud.com,secret789'}
                 rows={15}
                 className="input w-full resize-none font-mono text-sm"
                 disabled={importing}
@@ -473,8 +533,8 @@ export default function AccountsPage() {
               />
               <p className="text-xs text-gray-500">
                 {language === 'fr'
-                  ? `${importText.split('\n').filter(l => l.trim() && l.includes('@')).length} email(s) détecté(s)`
-                  : `${importText.split('\n').filter(l => l.trim() && l.includes('@')).length} email(s) detected`}
+                  ? `${importText.split('\n').filter(l => l.trim() && l.includes('@')).length} compte(s) détecté(s)`
+                  : `${importText.split('\n').filter(l => l.trim() && l.includes('@')).length} account(s) detected`}
               </p>
             </div>
 
@@ -490,7 +550,7 @@ export default function AccountsPage() {
                 {language === 'fr' ? 'Annuler' : 'Cancel'}
               </button>
               <button
-                onClick={handleImportEmails}
+                onClick={handleImportAccounts}
                 className="btn btn-primary flex-1"
                 disabled={importing || !importText.trim()}
               >
