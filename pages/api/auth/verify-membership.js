@@ -9,14 +9,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email requis' })
   }
 
+  const normalizedEmail = email.trim().toLowerCase()
+
   // Owner emails that bypass Whop verification
-  const allowedEmails = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
+  const allowedEmails = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
   // Check if email is in allowed list (owner bypass)
-  if (allowedEmails.includes(email.toLowerCase())) {
+  if (allowedEmails.includes(normalizedEmail)) {
     const user = {
       id: 'owner_' + Date.now(),
-      email: email,
+      email: normalizedEmail,
       isOwner: true,
     }
 
@@ -31,11 +33,22 @@ export default async function handler(req, res) {
   try {
     // Check membership using Whop API
     const apiKey = process.env.WHOP_API_KEY
-    const productId = process.env.WHOP_PRODUCT_ID
+    const productId = process.env.WHOP_PRODUCT_ID?.trim()
+
+    if (!apiKey) {
+      console.error('[Whop Auth] WHOP_API_KEY not configured')
+      return res.status(500).json({
+        success: false,
+        error: 'Configuration serveur incomplète'
+      })
+    }
+
+    console.log(`[Whop Auth] Checking membership for: ${normalizedEmail}`)
+    console.log(`[Whop Auth] Product ID: ${productId || 'NOT SET'}`)
 
     // Search for memberships with this email
     const response = await fetch(
-      `https://api.whop.com/api/v2/memberships?email=${encodeURIComponent(email)}&valid=true`,
+      `https://api.whop.com/api/v2/memberships?email=${encodeURIComponent(normalizedEmail)}`,
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -46,25 +59,77 @@ export default async function handler(req, res) {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('Whop API error:', data)
+      console.error('[Whop Auth] API error:', response.status, data)
       return res.status(401).json({
         success: false,
-        error: 'Aucun abonnement actif trouvé pour cet email'
+        error: 'Erreur de vérification Whop. Contacte le support.'
       })
     }
 
-    // Check if user has an active membership for this product
     const memberships = data.data || []
-    const validMembership = memberships.find(m =>
-      m.valid === true &&
-      (productId ? m.product_id === productId : true)
-    )
+    console.log(`[Whop Auth] Found ${memberships.length} memberships for ${normalizedEmail}`)
+
+    // Log all memberships for debugging
+    memberships.forEach((m, i) => {
+      console.log(`[Whop Auth] Membership ${i + 1}:`, {
+        id: m.id,
+        product_id: m.product_id,
+        plan_id: m.plan_id,
+        status: m.status,
+        valid: m.valid,
+        email: m.email,
+        created_at: m.created_at
+      })
+    })
+
+    // Find valid membership
+    // First try to match by product ID if configured
+    let validMembership = null
+
+    if (productId) {
+      // Try exact match
+      validMembership = memberships.find(m =>
+        m.valid === true && m.product_id === productId
+      )
+
+      // If not found, try case-insensitive match
+      if (!validMembership) {
+        validMembership = memberships.find(m =>
+          m.valid === true && m.product_id?.toLowerCase() === productId.toLowerCase()
+        )
+      }
+    }
+
+    // If still not found and no product ID or no match, accept any valid membership
+    if (!validMembership) {
+      validMembership = memberships.find(m => m.valid === true)
+
+      if (validMembership && productId) {
+        console.log(`[Whop Auth] WARNING: Found valid membership but product_id mismatch!`)
+        console.log(`[Whop Auth] Expected: ${productId}, Got: ${validMembership.product_id}`)
+        // Still accept it but log the warning
+      }
+    }
+
+    // Also check by status if valid flag is not set
+    if (!validMembership) {
+      validMembership = memberships.find(m =>
+        m.status === 'active' || m.status === 'trialing' || m.status === 'completed'
+      )
+
+      if (validMembership) {
+        console.log(`[Whop Auth] Found membership by status: ${validMembership.status}`)
+      }
+    }
 
     if (validMembership) {
+      console.log(`[Whop Auth] SUCCESS - Valid membership found:`, validMembership.id)
+
       const user = {
         id: validMembership.id,
-        email: email,
+        email: normalizedEmail,
         membership_id: validMembership.id,
+        product_id: validMembership.product_id,
       }
 
       const maxAge = 30 * 24 * 60 * 60 // 30 days
@@ -74,16 +139,27 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true, user })
     } else {
+      console.log(`[Whop Auth] FAILED - No valid membership found for ${normalizedEmail}`)
+
+      // More helpful error message
+      let errorMsg = 'Aucun abonnement actif trouvé pour cet email'
+
+      if (memberships.length > 0) {
+        const statuses = memberships.map(m => m.status).join(', ')
+        console.log(`[Whop Auth] Found memberships with statuses: ${statuses}`)
+        errorMsg = `Abonnement trouvé mais non actif (${statuses}). Vérifie ton paiement sur Whop.`
+      }
+
       return res.status(401).json({
         success: false,
-        error: 'Aucun abonnement actif trouvé pour cet email'
+        error: errorMsg
       })
     }
   } catch (error) {
-    console.error('Verification error:', error)
-    return res.status(401).json({
+    console.error('[Whop Auth] Verification error:', error)
+    return res.status(500).json({
       success: false,
-      error: 'Aucun abonnement actif trouvé pour cet email'
+      error: 'Erreur de connexion au serveur. Réessaie dans quelques instants.'
     })
   }
 }
