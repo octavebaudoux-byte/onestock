@@ -14,7 +14,8 @@ import {
   Settings,
   CreditCard,
   Search,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -28,6 +29,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
     { href: '/inventory', icon: Package, label: t('nav.inventory') },
     { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
     { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
+    { href: '/accounts', icon: User, label: language === 'fr' ? 'Comptes' : 'Accounts' },
     { href: '/stats', icon: TrendingUp, label: t('nav.stats') },
     { href: '/calendar', icon: Calendar, label: language === 'fr' ? 'Calendrier' : 'Calendar' },
     { href: '/settings', icon: Settings, label: t('nav.settings') },
