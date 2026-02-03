@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
-import { User, Plus, Search, Edit2, Trash2, Eye, EyeOff, Copy, Check } from 'lucide-react'
+import { User, Plus, Search, Edit2, Trash2, Eye, EyeOff, Copy, Check, Upload } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -17,9 +17,12 @@ export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editingAccount, setEditingAccount] = useState(null)
   const [visiblePasswords, setVisiblePasswords] = useState(new Set())
   const [copiedId, setCopiedId] = useState(null)
+  const [importText, setImportText] = useState('')
+  const [importing, setImporting] = useState(false)
 
   const itemsPerPage = 50
 
@@ -131,6 +134,70 @@ export default function AccountsPage() {
     }
   }
 
+  // Importer une liste de comptes
+  async function handleImport() {
+    if (!importText.trim()) {
+      showToast(language === 'fr' ? 'Veuillez entrer des comptes' : 'Please enter accounts', 'error')
+      return
+    }
+
+    setImporting(true)
+    try {
+      const lines = importText.trim().split('\n')
+      let successCount = 0
+      let errorCount = 0
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (!trimmedLine) continue
+
+        // Format attendu: site email password ou site email password notes
+        const parts = trimmedLine.split(/\s+/)
+
+        if (parts.length < 3) {
+          errorCount++
+          continue
+        }
+
+        const accountData = {
+          site: parts[0],
+          email: parts[1],
+          password: parts[2],
+          notes: parts.length > 3 ? parts.slice(3).join(' ') : ''
+        }
+
+        try {
+          const newAccount = await addAccount(user.id, accountData)
+          if (newAccount) {
+            successCount++
+            setAccounts(prev => [newAccount, ...prev])
+          } else {
+            errorCount++
+          }
+        } catch (error) {
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        showToast(
+          language === 'fr'
+            ? `${successCount} compte(s) importé(s)${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`
+            : `${successCount} account(s) imported${errorCount > 0 ? `, ${errorCount} error(s)` : ''}`,
+          errorCount > 0 ? 'warning' : 'success'
+        )
+      } else {
+        showToast(language === 'fr' ? 'Aucun compte importé' : 'No accounts imported', 'error')
+      }
+
+      setShowImportModal(false)
+      setImportText('')
+    } catch (error) {
+      showToast(language === 'fr' ? 'Erreur d\'import' : 'Import error', 'error')
+    }
+    setImporting(false)
+  }
+
   // Toggle visibilité mot de passe
   function togglePasswordVisibility(accountId) {
     const newSet = new Set(visiblePasswords)
@@ -179,13 +246,22 @@ export default function AccountsPage() {
                 <p className="text-gray-400">{accounts.length} {language === 'fr' ? 'comptes enregistrés' : 'saved accounts'}</p>
               </div>
             </div>
-            <button
-              onClick={openAddModal}
-              className="btn btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              {language === 'fr' ? 'Ajouter' : 'Add'}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="btn btn-secondary flex items-center gap-2"
+              >
+                <Upload className="w-5 h-5" />
+                {language === 'fr' ? 'Importer' : 'Import'}
+              </button>
+              <button
+                onClick={openAddModal}
+                className="btn btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                {language === 'fr' ? 'Ajouter' : 'Add'}
+              </button>
+            </div>
           </div>
 
           {/* Barre de recherche */}
@@ -424,6 +500,81 @@ export default function AccountsPage() {
                 className="btn btn-primary flex-1"
               >
                 {language === 'fr' ? 'Enregistrer' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Import en masse */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="card max-w-2xl w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">
+              {language === 'fr' ? 'Importer des comptes' : 'Import Accounts'}
+            </h2>
+
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-blue-400 mb-2">
+                {language === 'fr' ? 'Format attendu' : 'Expected format'}
+              </h3>
+              <p className="text-sm text-gray-400 mb-2">
+                {language === 'fr'
+                  ? 'Une ligne par compte avec le format:'
+                  : 'One line per account with the format:'}
+              </p>
+              <code className="block bg-dark-700 p-3 rounded text-sm font-mono text-green-400">
+                site email password [notes]
+              </code>
+              <p className="text-xs text-gray-500 mt-2">
+                {language === 'fr'
+                  ? 'Exemple: Zalando octave@baudoux.fr hadrien1234 Compte principal'
+                  : 'Example: Zalando octave@baudoux.fr hadrien1234 Main account'}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  {language === 'fr' ? 'Collez vos comptes ici' : 'Paste your accounts here'}
+                </label>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder={language === 'fr'
+                    ? 'Zalando octave@baudoux.fr hadrien1234\nNike john@doe.com password123\nAdidas...'
+                    : 'Zalando octave@baudoux.fr hadrien1234\nNike john@doe.com password123\nAdidas...'}
+                  rows={12}
+                  className="input w-full resize-none font-mono text-sm"
+                  disabled={importing}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {language === 'fr'
+                    ? `${importText.split('\n').filter(l => l.trim()).length} ligne(s) détectée(s)`
+                    : `${importText.split('\n').filter(l => l.trim()).length} line(s) detected`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowImportModal(false)
+                  setImportText('')
+                }}
+                className="btn btn-secondary flex-1"
+                disabled={importing}
+              >
+                {language === 'fr' ? 'Annuler' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleImport}
+                className="btn btn-primary flex-1"
+                disabled={importing || !importText.trim()}
+              >
+                {importing
+                  ? (language === 'fr' ? 'Import en cours...' : 'Importing...')
+                  : (language === 'fr' ? 'Importer' : 'Import')}
               </button>
             </div>
           </div>
