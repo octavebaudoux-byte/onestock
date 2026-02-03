@@ -23,9 +23,22 @@ export default function Inventory() {
   const [filterBrand, setFilterBrand] = useState('all')
   const [sortBy, setSortBy] = useState('date')
 
+  // Expand sneakers by quantity
+  const expandedSneakers = useMemo(() => {
+    return sneakers.flatMap(sneaker => {
+      const qty = sneaker.quantity || 1
+      if (qty <= 1) return [sneaker]
+      return Array.from({ length: qty }, (_, i) => ({
+        ...sneaker,
+        _instanceIndex: i,
+        _uniqueKey: `${sneaker.id}-${i}`
+      }))
+    })
+  }, [sneakers])
+
   // Filtrage et tri
   const filteredSneakers = useMemo(() => {
-    let result = [...sneakers]
+    let result = [...expandedSneakers]
 
     // Search
     if (searchTerm) {
@@ -71,7 +84,7 @@ export default function Inventory() {
     }
 
     return result
-  }, [sneakers, searchTerm, filterStatus, filterBrand, sortBy])
+  }, [expandedSneakers, searchTerm, filterStatus, filterBrand, sortBy])
 
   // Handlers
   const handleSaveSneaker = async (sneaker) => {
@@ -124,12 +137,16 @@ export default function Inventory() {
   // Marques présentes dans le stock
   const brandsInStock = [...new Set(sneakers.map(s => s.brand))].sort()
 
-  // Stats rapides
-  const stockCount = sneakers.filter(s => s.status === 'stock').length
-  const soldCount = sneakers.filter(s => s.status === 'sold').length
+  // Stats rapides (incluant les quantités)
+  const stockCount = sneakers
+    .filter(s => s.status === 'stock')
+    .reduce((sum, s) => sum + (s.quantity || 1), 0)
+  const soldCount = sneakers
+    .filter(s => s.status === 'sold')
+    .reduce((sum, s) => sum + (s.quantity || 1), 0)
   const totalValue = sneakers
     .filter(s => s.status === 'stock')
-    .reduce((sum, s) => sum + (s.buyPrice || 0), 0)
+    .reduce((sum, s) => sum + ((s.buyPrice || 0) * (s.quantity || 1)), 0)
 
   if (loading) {
     return (
@@ -216,14 +233,19 @@ export default function Inventory() {
           {/* Grid */}
           {filteredSneakers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
-              {filteredSneakers.map(sneaker => (
-                <div key={sneaker.id} className="w-full flex justify-center sm:justify-start">
+              {filteredSneakers.map((sneaker, index) => (
+                <div
+                  key={sneaker._uniqueKey || sneaker.id}
+                  className="w-full flex justify-center sm:justify-start animate-slideUp"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                   <SneakerCard
                     sneaker={sneaker}
                     onEdit={handleEditSneaker}
                     onDelete={handleDeleteSneaker}
                     onToggle={handleToggle}
                     onSell={handleSellSneaker}
+                    instanceIndex={sneaker._instanceIndex || 0}
                   />
                 </div>
               ))}

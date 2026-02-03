@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Search, FileText, Loader2 } from 'lucide-react'
+import { X, Search, FileText, Loader2, Receipt } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 import { useToast } from '../contexts/ToastContext'
@@ -13,6 +13,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     brand: '',
     sku: '',
     size: '42',
+    quantity: 1,
     condition: 'new',
     buyPrice: '',
     buyDate: new Date().toISOString().split('T')[0],
@@ -30,6 +31,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     deliveryStatus: 'pending',
     listedOnPlatforms: [],
     targetSellPrice: '',
+    hasInvoice: false,
   })
 
   // Search state
@@ -53,6 +55,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       setFormData({
         ...sneaker,
         category: sneaker.category || 'sneakers',
+        quantity: sneaker.quantity || 1,
         status: mode === 'sale' ? 'sold' : (sneaker.status || 'stock'),
         itemReceived: sneaker.itemReceived ?? false,
         paymentStatus: sneaker.paymentStatus || 'pending',
@@ -61,6 +64,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         sellDate: sneaker.sellDate?.split('T')[0] || (mode === 'sale' ? new Date().toISOString().split('T')[0] : ''),
         invoiceUrl: sneaker.invoiceUrl || '',
         listedOnPlatforms: platforms,
+        hasInvoice: sneaker.hasInvoice ?? false,
       })
     } else {
       setFormData({
@@ -69,6 +73,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         brand: '',
         sku: '',
         size: '42',
+        quantity: 1,
         condition: 'new',
         buyPrice: '',
         buyDate: new Date().toISOString().split('T')[0],
@@ -86,6 +91,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         deliveryStatus: 'pending',
         listedOnPlatforms: [],
         targetSellPrice: '',
+        hasInvoice: false,
       })
       setShowSearch(mode === 'add' || mode === 'sale')
     }
@@ -199,6 +205,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       sellPrice: formData.sellPrice ? parseFloat(formData.sellPrice) : null,
       fees: formData.fees ? parseFloat(formData.fees) : 0,
       targetSellPrice: formData.targetSellPrice ? parseFloat(formData.targetSellPrice) : null,
+      quantity: parseInt(formData.quantity) || 1,
       createdAt: sneaker?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -449,7 +456,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
           </div>
 
           {/* Catégorie, Marque et Taille */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-2">Catégorie</label>
               <select
@@ -498,6 +505,18 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                   <option key={size} value={size}>{size}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Quantité</label>
+              <input
+                type="number"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                min="1"
+                max="999"
+                className="w-full"
+              />
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-2">État *</label>
@@ -720,8 +739,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                   </div>
                 </div>
 
-                {/* Statuts paiement et livraison - Toggles */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Statuts paiement, livraison et facture - Toggles */}
+                <div className="grid grid-cols-3 gap-4">
                   <div
                     onClick={() => setFormData(prev => ({ ...prev, paymentStatus: prev.paymentStatus === 'received' ? 'pending' : 'received' }))}
                     className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
@@ -740,7 +759,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                         }`} />
                       </div>
                     </div>
-                    <div className="mt-2 font-medium">
+                    <div className="mt-2 font-medium text-sm">
                       {formData.paymentStatus === 'received' ? 'Paiement reçu' : 'Paiement en attente'}
                     </div>
                   </div>
@@ -762,8 +781,30 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                         }`} />
                       </div>
                     </div>
-                    <div className="mt-2 font-medium">
+                    <div className="mt-2 font-medium text-sm">
                       {formData.deliveryStatus === 'delivered' ? 'Colis livré' : 'Colis en attente'}
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, hasInvoice: !prev.hasInvoice }))}
+                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
+                      formData.hasInvoice
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                        : 'bg-dark-600/50 border-gray-600 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">{formData.hasInvoice ? '🧾' : '📄'}</span>
+                      <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                        formData.hasInvoice ? 'bg-blue-500' : 'bg-gray-600'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                          formData.hasInvoice ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
+                    <div className="mt-2 font-medium text-sm">
+                      {formData.hasInvoice ? 'Facturé' : 'Sans facture'}
                     </div>
                   </div>
                 </div>

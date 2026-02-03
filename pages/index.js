@@ -98,13 +98,25 @@ export default function Dashboard() {
     setIsModalOpen(true)
   }
 
+  // Expand sneakers by quantity (duplicate cards)
+  const expandedSneakers = sneakers.flatMap(sneaker => {
+    const qty = sneaker.quantity || 1
+    if (qty <= 1) return [sneaker]
+    // Create array of sneakers with instance index
+    return Array.from({ length: qty }, (_, i) => ({
+      ...sneaker,
+      _instanceIndex: i,
+      _uniqueKey: `${sneaker.id}-${i}`
+    }))
+  })
+
   // Dernières paires (6 pour la grille)
-  const recentSneakers = [...sneakers]
+  const recentSneakers = [...expandedSneakers]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 6)
 
   // Dernières ventes
-  const recentSales = sneakers
+  const recentSales = expandedSneakers
     .filter(s => s.status === 'sold')
     .sort((a, b) => new Date(b.sellDate) - new Date(a.sellDate))
     .slice(0, 4)
@@ -277,13 +289,14 @@ export default function Dashboard() {
             {recentSneakers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
                 {recentSneakers.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${500 + index * 100}ms` }}>
+                  <div key={sneaker._uniqueKey || sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${500 + index * 100}ms` }}>
                     <SneakerCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
                       onToggle={handleToggle}
                       onSell={handleSellSneaker}
+                      instanceIndex={sneaker._instanceIndex || 0}
                     />
                   </div>
                 ))}
@@ -318,12 +331,13 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
                 {recentSales.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${700 + index * 100}ms` }}>
+                  <div key={sneaker._uniqueKey || sneaker.id} className="animate-slideUp w-full flex justify-center sm:justify-start" style={{ animationDelay: `${700 + index * 100}ms` }}>
                     <SneakerCard
                       sneaker={sneaker}
                       onEdit={handleEditSneaker}
                       onDelete={handleDeleteSneaker}
                       onToggle={handleToggle}
+                      instanceIndex={sneaker._instanceIndex || 0}
                     />
                   </div>
                 ))}

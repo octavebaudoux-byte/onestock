@@ -1,8 +1,8 @@
-import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package, DollarSign } from 'lucide-react'
+import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package, DollarSign, Receipt } from 'lucide-react'
 import { formatPrice } from '../lib/store'
 import { useLanguage } from '../contexts/LanguageContext'
 
-export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSell }) {
+export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSell, instanceIndex = 0 }) {
   const { t, language } = useLanguage()
   const profit = sneaker.status === 'sold' && sneaker.sellPrice
     ? sneaker.sellPrice - sneaker.buyPrice - (sneaker.fees || 0)
@@ -55,6 +55,20 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
 
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+        {/* Quantity badge */}
+        {sneaker.quantity > 1 && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+            x{sneaker.quantity}
+          </div>
+        )}
+
+        {/* Invoice badge */}
+        {sneaker.hasInvoice && sneaker.status === 'sold' && (
+          <div className="absolute bottom-2 right-2 bg-blue-500/90 text-white p-1.5 rounded-lg shadow-lg" title="Facturé">
+            <Receipt className="w-3.5 h-3.5" />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
