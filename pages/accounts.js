@@ -1,3 +1,4 @@
+// Accounts Page - Gestion des comptes emails par groupe
 import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
 import { User, Plus, Search, Upload, X, Copy, Check, Trash2 } from 'lucide-react'
