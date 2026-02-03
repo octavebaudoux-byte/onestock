@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
-import { User, Plus, Search, Edit2, Trash2, Eye, EyeOff, Copy, Check, Upload } from 'lucide-react'
+import { User, Plus, Search, Upload, ChevronDown, ChevronRight } from 'lucide-react'
 import Layout from '../components/Layout'
+import AccountCard from '../components/AccountCard'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useToast } from '../contexts/ToastContext'
@@ -15,19 +16,16 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
   const [showModal, setShowModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [editingAccount, setEditingAccount] = useState(null)
-  const [visiblePasswords, setVisiblePasswords] = useState(new Set())
-  const [copiedId, setCopiedId] = useState(null)
   const [importText, setImportText] = useState('')
   const [importing, setImporting] = useState(false)
 
-  const itemsPerPage = 50
-
   // Formulaire
   const [formData, setFormData] = useState({
+    groupName: '',
     site: '',
     email: '',
     password: '',
@@ -46,42 +44,61 @@ export default function AccountsPage() {
     try {
       const data = await loadAccounts(user.id)
       setAccounts(data)
+      // Expand all groups by default
+      const groups = new Set(data.map(a => a.groupName || 'Sans groupe').filter(Boolean))
+      setExpandedGroups(groups)
     } catch (error) {
       showToast(language === 'fr' ? 'Erreur de chargement' : 'Loading error', 'error')
     }
     setLoading(false)
   }
 
-  // Filtrer les comptes par recherche
-  const filteredAccounts = useMemo(() => {
-    if (!searchTerm) return accounts
+  // Grouper les comptes
+  const groupedAccounts = useMemo(() => {
+    const filtered = searchTerm
+      ? accounts.filter(account =>
+          account.site?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : accounts
 
-    const term = searchTerm.toLowerCase()
-    return accounts.filter(account =>
-      account.site?.toLowerCase().includes(term) ||
-      account.email?.toLowerCase().includes(term) ||
-      account.notes?.toLowerCase().includes(term)
-    )
-  }, [accounts, searchTerm])
+    const groups = {}
+    filtered.forEach(account => {
+      const groupName = account.groupName || (language === 'fr' ? 'Sans groupe' : 'Ungrouped')
+      if (!groups[groupName]) {
+        groups[groupName] = []
+      }
+      groups[groupName].push(account)
+    })
 
-  // Pagination
-  const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage)
-  const paginatedAccounts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredAccounts.slice(start, start + itemsPerPage)
-  }, [filteredAccounts, currentPage])
+    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]))
+  }, [accounts, searchTerm, language])
 
-  // Ouvrir le modal pour ajouter
+  // Toggle groupe
+  function toggleGroup(groupName) {
+    const newSet = new Set(expandedGroups)
+    if (newSet.has(groupName)) {
+      newSet.delete(groupName)
+    } else {
+      newSet.add(groupName)
+    }
+    setExpandedGroups(newSet)
+  }
+
+  // Ouvrir modal ajout
   function openAddModal() {
     setEditingAccount(null)
-    setFormData({ site: '', email: '', password: '', notes: '' })
+    setFormData({ groupName: '', site: '', email: '', password: '', notes: '' })
     setShowModal(true)
   }
 
-  // Ouvrir le modal pour éditer
+  // Ouvrir modal édition
   function openEditModal(account) {
     setEditingAccount(account)
     setFormData({
+      groupName: account.groupName || '',
       site: account.site || '',
       email: account.email || '',
       password: account.password || '',
@@ -90,26 +107,26 @@ export default function AccountsPage() {
     setShowModal(true)
   }
 
-  // Sauvegarder (ajout ou modification)
+  // Sauvegarder
   async function handleSave() {
-    if (!formData.site || !formData.email || !formData.password) {
-      showToast(language === 'fr' ? 'Site, email et mot de passe requis' : 'Site, email and password required', 'error')
+    if (!formData.groupName || !formData.site || !formData.email || !formData.password) {
+      showToast(language === 'fr' ? 'Groupe, site, email et mot de passe requis' : 'Group, site, email and password required', 'error')
       return
     }
 
     try {
       if (editingAccount) {
-        // Modification
         const updated = await updateAccount(user.id, editingAccount.id, formData)
         if (updated) {
           setAccounts(accounts.map(a => a.id === editingAccount.id ? updated : a))
           showToast(language === 'fr' ? 'Compte modifié' : 'Account updated', 'success')
         }
       } else {
-        // Ajout
         const newAccount = await addAccount(user.id, formData)
         if (newAccount) {
           setAccounts([newAccount, ...accounts])
+          // Auto-expand new group
+          setExpandedGroups(prev => new Set([...prev, newAccount.groupName]))
           showToast(language === 'fr' ? 'Compte ajouté' : 'Account added', 'success')
         }
       }
@@ -119,7 +136,7 @@ export default function AccountsPage() {
     }
   }
 
-  // Supprimer un compte
+  // Supprimer
   async function handleDelete(accountId) {
     if (!confirm(language === 'fr' ? 'Supprimer ce compte ?' : 'Delete this account?')) return
 
@@ -134,7 +151,7 @@ export default function AccountsPage() {
     }
   }
 
-  // Importer une liste de comptes
+  // Import en masse
   async function handleImport() {
     if (!importText.trim()) {
       showToast(language === 'fr' ? 'Veuillez entrer des comptes' : 'Please enter accounts', 'error')
@@ -151,19 +168,20 @@ export default function AccountsPage() {
         const trimmedLine = line.trim()
         if (!trimmedLine) continue
 
-        // Format attendu: site email password ou site email password notes
+        // Format: groupName site email password [notes]
         const parts = trimmedLine.split(/\s+/)
 
-        if (parts.length < 3) {
+        if (parts.length < 4) {
           errorCount++
           continue
         }
 
         const accountData = {
-          site: parts[0],
-          email: parts[1],
-          password: parts[2],
-          notes: parts.length > 3 ? parts.slice(3).join(' ') : ''
+          groupName: parts[0],
+          site: parts[1],
+          email: parts[2],
+          password: parts[3],
+          notes: parts.length > 4 ? parts.slice(4).join(' ') : ''
         }
 
         try {
@@ -171,6 +189,7 @@ export default function AccountsPage() {
           if (newAccount) {
             successCount++
             setAccounts(prev => [newAccount, ...prev])
+            setExpandedGroups(prev => new Set([...prev, newAccount.groupName]))
           } else {
             errorCount++
           }
@@ -198,29 +217,6 @@ export default function AccountsPage() {
     setImporting(false)
   }
 
-  // Toggle visibilité mot de passe
-  function togglePasswordVisibility(accountId) {
-    const newSet = new Set(visiblePasswords)
-    if (newSet.has(accountId)) {
-      newSet.delete(accountId)
-    } else {
-      newSet.add(accountId)
-    }
-    setVisiblePasswords(newSet)
-  }
-
-  // Copier dans le presse-papier
-  async function copyToClipboard(text, accountId) {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedId(accountId)
-      showToast(language === 'fr' ? 'Copié' : 'Copied', 'success')
-      setTimeout(() => setCopiedId(null), 2000)
-    } catch (error) {
-      showToast(language === 'fr' ? 'Erreur de copie' : 'Copy error', 'error')
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -243,7 +239,9 @@ export default function AccountsPage() {
               <User className="w-8 h-8 text-blue-400" />
               <div>
                 <h1 className="text-3xl font-bold">{language === 'fr' ? 'Mes Comptes' : 'My Accounts'}</h1>
-                <p className="text-gray-400">{accounts.length} {language === 'fr' ? 'comptes enregistrés' : 'saved accounts'}</p>
+                <p className="text-gray-400">
+                  {groupedAccounts.length} {language === 'fr' ? 'groupes' : 'groups'} · {accounts.length} {language === 'fr' ? 'comptes' : 'accounts'}
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -270,154 +268,63 @@ export default function AccountsPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder={language === 'fr' ? 'Rechercher par site, email...' : 'Search by site, email...'}
+                placeholder={language === 'fr' ? 'Rechercher...' : 'Search...'}
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setCurrentPage(1)
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
-          {/* Tableau des comptes */}
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-dark-700">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      {language === 'fr' ? 'Site' : 'Site'}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      {language === 'fr' ? 'Mot de passe' : 'Password'}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Notes
-                    </th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dark-700">
-                  {paginatedAccounts.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
-                        {searchTerm
-                          ? (language === 'fr' ? 'Aucun compte trouvé' : 'No accounts found')
-                          : (language === 'fr' ? 'Aucun compte. Cliquez sur Ajouter pour commencer.' : 'No accounts. Click Add to get started.')
-                        }
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedAccounts.map((account) => (
-                      <tr key={account.id} className="hover:bg-dark-700/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-white">{account.site}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-300">{account.email}</span>
-                            <button
-                              onClick={() => copyToClipboard(account.email, `email-${account.id}`)}
-                              className="p-1 hover:bg-dark-600 rounded transition-colors"
-                              title={language === 'fr' ? 'Copier' : 'Copy'}
-                            >
-                              {copiedId === `email-${account.id}` ? (
-                                <Check className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <Copy className="w-4 h-4 text-gray-400" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-300 font-mono">
-                              {visiblePasswords.has(account.id) ? account.password : '••••••••'}
-                            </span>
-                            <button
-                              onClick={() => togglePasswordVisibility(account.id)}
-                              className="p-1 hover:bg-dark-600 rounded transition-colors"
-                              title={visiblePasswords.has(account.id) ? (language === 'fr' ? 'Masquer' : 'Hide') : (language === 'fr' ? 'Afficher' : 'Show')}
-                            >
-                              {visiblePasswords.has(account.id) ? (
-                                <EyeOff className="w-4 h-4 text-gray-400" />
-                              ) : (
-                                <Eye className="w-4 h-4 text-gray-400" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => copyToClipboard(account.password, `pwd-${account.id}`)}
-                              className="p-1 hover:bg-dark-600 rounded transition-colors"
-                              title={language === 'fr' ? 'Copier' : 'Copy'}
-                            >
-                              {copiedId === `pwd-${account.id}` ? (
-                                <Check className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <Copy className="w-4 h-4 text-gray-400" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-gray-400 text-sm">
-                            {account.notes ? (account.notes.length > 30 ? account.notes.substring(0, 30) + '...' : account.notes) : '-'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => openEditModal(account)}
-                              className="p-2 hover:bg-blue-600/20 text-blue-400 rounded transition-colors"
-                              title={language === 'fr' ? 'Modifier' : 'Edit'}
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(account.id)}
-                              className="p-2 hover:bg-red-600/20 text-red-400 rounded transition-colors"
-                              title={language === 'fr' ? 'Supprimer' : 'Delete'}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-dark-700 flex items-center justify-between">
-                <div className="text-sm text-gray-400">
-                  {language === 'fr' ? 'Page' : 'Page'} {currentPage} {language === 'fr' ? 'sur' : 'of'} {totalPages}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {language === 'fr' ? 'Précédent' : 'Previous'}
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {language === 'fr' ? 'Suivant' : 'Next'}
-                  </button>
-                </div>
+          {/* Groupes de comptes */}
+          <div className="space-y-6">
+            {groupedAccounts.length === 0 ? (
+              <div className="card p-12 text-center">
+                <p className="text-gray-400">
+                  {searchTerm
+                    ? (language === 'fr' ? 'Aucun compte trouvé' : 'No accounts found')
+                    : (language === 'fr' ? 'Aucun compte. Cliquez sur Ajouter pour commencer.' : 'No accounts. Click Add to get started.')
+                  }
+                </p>
               </div>
+            ) : (
+              groupedAccounts.map(([groupName, groupAccounts]) => (
+                <div key={groupName} className="card overflow-hidden">
+                  {/* Group Header */}
+                  <button
+                    onClick={() => toggleGroup(groupName)}
+                    className="w-full px-6 py-4 flex items-center justify-between bg-dark-700/50 hover:bg-dark-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {expandedGroups.has(groupName) ? (
+                        <ChevronDown className="w-5 h-5 text-blue-400" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      )}
+                      <h2 className="text-xl font-bold text-white">{groupName}</h2>
+                      <span className="text-sm text-gray-400">
+                        ({groupAccounts.length} {language === 'fr' ? 'compte' : 'account'}{groupAccounts.length > 1 ? 's' : ''})
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Group Accounts */}
+                  {expandedGroups.has(groupName) && (
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {groupAccounts.map(account => (
+                          <AccountCard
+                            key={account.id}
+                            account={account}
+                            onEdit={openEditModal}
+                            onDelete={handleDelete}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -437,13 +344,26 @@ export default function AccountsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
+                  {language === 'fr' ? 'Nom du groupe' : 'Group Name'} <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.groupName}
+                  onChange={(e) => setFormData({ ...formData, groupName: e.target.value })}
+                  placeholder={language === 'fr' ? 'Ex: iCloud, Nike, Zalando...' : 'Ex: iCloud, Nike, Zalando...'}
+                  className="input w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
                   {language === 'fr' ? 'Site / Plateforme' : 'Site / Platform'} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.site}
                   onChange={(e) => setFormData({ ...formData, site: e.target.value })}
-                  placeholder={language === 'fr' ? 'Ex: Zalando, Nike, Adidas...' : 'Ex: Zalando, Nike, Adidas...'}
+                  placeholder={language === 'fr' ? 'Ex: Apple, Nike.com...' : 'Ex: Apple, Nike.com...'}
                   className="input w-full"
                 />
               </div>
@@ -506,7 +426,7 @@ export default function AccountsPage() {
         </div>
       )}
 
-      {/* Modal Import en masse */}
+      {/* Modal Import */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card max-w-2xl w-full p-6">
@@ -520,16 +440,16 @@ export default function AccountsPage() {
               </h3>
               <p className="text-sm text-gray-400 mb-2">
                 {language === 'fr'
-                  ? 'Une ligne par compte avec le format:'
-                  : 'One line per account with the format:'}
+                  ? 'Une ligne par compte:'
+                  : 'One line per account:'}
               </p>
               <code className="block bg-dark-700 p-3 rounded text-sm font-mono text-green-400">
-                site email password [notes]
+                groupName site email password [notes]
               </code>
               <p className="text-xs text-gray-500 mt-2">
                 {language === 'fr'
-                  ? 'Exemple: Zalando octave@baudoux.fr hadrien1234 Compte principal'
-                  : 'Example: Zalando octave@baudoux.fr hadrien1234 Main account'}
+                  ? 'Exemple: iCloud Apple octave@baudoux.fr hadrien1234 Mon compte principal'
+                  : 'Example: iCloud Apple octave@baudoux.fr hadrien1234 Main account'}
               </p>
             </div>
 
@@ -542,8 +462,8 @@ export default function AccountsPage() {
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
                   placeholder={language === 'fr'
-                    ? 'Zalando octave@baudoux.fr hadrien1234\nNike john@doe.com password123\nAdidas...'
-                    : 'Zalando octave@baudoux.fr hadrien1234\nNike john@doe.com password123\nAdidas...'}
+                    ? 'iCloud Apple octave@baudoux.fr hadrien1234\nNike Nike.com john@doe.com password123\n...'
+                    : 'iCloud Apple octave@baudoux.fr hadrien1234\nNike Nike.com john@doe.com password123\n...'}
                   rows={12}
                   className="input w-full resize-none font-mono text-sm"
                   disabled={importing}
