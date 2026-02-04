@@ -70,6 +70,20 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
           </div>
         )}
 
+        {/* Cashback badge */}
+        {sneaker.cashbackStatus && sneaker.cashbackStatus !== 'none' && (
+          <div
+            className={`absolute bottom-2 left-2 px-2 py-1 rounded-lg shadow-lg text-xs font-bold ${
+              sneaker.cashbackStatus === 'received'
+                ? 'bg-emerald-500/90 text-white'
+                : 'bg-amber-500/90 text-white'
+            }`}
+            title={sneaker.cashbackStatus === 'received' ? 'Cashback reçu' : 'Cashback réclamé'}
+          >
+            💸 {sneaker.cashbackStatus === 'received' ? 'CB reçu' : 'CB réclamé'}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
           <button

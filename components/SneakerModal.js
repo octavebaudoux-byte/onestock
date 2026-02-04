@@ -32,6 +32,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     listedOnPlatforms: [],
     targetSellPrice: '',
     hasInvoice: false,
+    cashbackStatus: 'none', // 'none', 'claimed', 'received'
   })
 
   // Search state
@@ -65,6 +66,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         invoiceUrl: sneaker.invoiceUrl || '',
         listedOnPlatforms: platforms,
         hasInvoice: sneaker.hasInvoice ?? false,
+        cashbackStatus: sneaker.cashbackStatus || 'none',
       })
     } else {
       setFormData({
@@ -92,6 +94,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         listedOnPlatforms: [],
         targetSellPrice: '',
         hasInvoice: false,
+        cashbackStatus: 'none',
       })
       setShowSearch(mode === 'add' || mode === 'sale')
     }
@@ -631,27 +634,72 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
 
             {/* Toggle Livraison - en mode add ou edit (si en stock) */}
             {(mode === 'add' || (mode === 'edit' && formData.status === 'stock')) && (
-              <div
-                onClick={() => setFormData(prev => ({ ...prev, itemReceived: !prev.itemReceived }))}
-                className={`cursor-pointer p-4 rounded-xl border-2 transition-all mt-4 ${
-                  formData.itemReceived
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                    : 'bg-amber-500/20 border-amber-500 text-amber-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{formData.itemReceived ? '✅' : '🚚'}</span>
-                    <div className="font-medium">
-                      {formData.itemReceived ? 'Livré' : 'En cours de livraison'}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div
+                  onClick={() => setFormData(prev => ({ ...prev, itemReceived: !prev.itemReceived }))}
+                  className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
+                    formData.itemReceived
+                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                      : 'bg-amber-500/20 border-amber-500 text-amber-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{formData.itemReceived ? '✅' : '🚚'}</span>
+                      <div className="font-medium">
+                        {formData.itemReceived ? 'Livré' : 'En livraison'}
+                      </div>
+                    </div>
+                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                      formData.itemReceived ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                        formData.itemReceived ? 'translate-x-6' : 'translate-x-0'
+                      }`} />
                     </div>
                   </div>
-                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                    formData.itemReceived ? 'bg-emerald-500' : 'bg-amber-500'
-                  }`}>
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      formData.itemReceived ? 'translate-x-6' : 'translate-x-0'
-                    }`} />
+                </div>
+
+                {/* Toggle Cashback - 3 états */}
+                <div className="p-4 rounded-xl border-2 border-gray-600 bg-dark-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">💸</span>
+                    <span className="font-medium text-sm text-gray-300">Cashback</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, cashbackStatus: 'none' }))}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
+                        formData.cashbackStatus === 'none'
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-dark-600 text-gray-500 hover:text-gray-400'
+                      }`}
+                    >
+                      Aucun
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, cashbackStatus: 'claimed' }))}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
+                        formData.cashbackStatus === 'claimed'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-dark-600 text-gray-500 hover:text-gray-400'
+                      }`}
+                    >
+                      Réclamé
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, cashbackStatus: 'received' }))}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
+                        formData.cashbackStatus === 'received'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-dark-600 text-gray-500 hover:text-gray-400'
+                      }`}
+                    >
+                      Reçu
+                    </button>
                   </div>
                 </div>
               </div>
