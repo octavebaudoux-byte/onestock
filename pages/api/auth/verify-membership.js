@@ -1,3 +1,70 @@
+import { supabaseServer } from '../../../lib/supabaseServer'
+
+// Fonction pour migrer les anciennes données vers le nouvel email
+async function migrateUserData(email) {
+  if (!supabaseServer) return { migrated: false }
+
+  const normalizedEmail = email.trim().toLowerCase()
+
+  try {
+    let totalMigrated = 0
+
+    // Migrer les sneakers avec ancien user_id (owner_xxx ou mem_xxx)
+    const { data: oldSneakers } = await supabaseServer
+      .from('sneakers')
+      .select('id')
+      .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+    if (oldSneakers && oldSneakers.length > 0) {
+      const { error } = await supabaseServer
+        .from('sneakers')
+        .update({ user_id: normalizedEmail })
+        .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+      if (!error) totalMigrated += oldSneakers.length
+    }
+
+    // Migrer les expenses
+    const { data: oldExpenses } = await supabaseServer
+      .from('expenses')
+      .select('id')
+      .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+    if (oldExpenses && oldExpenses.length > 0) {
+      const { error } = await supabaseServer
+        .from('expenses')
+        .update({ user_id: normalizedEmail })
+        .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+      if (!error) totalMigrated += oldExpenses.length
+    }
+
+    // Migrer les accounts
+    const { data: oldAccounts } = await supabaseServer
+      .from('accounts')
+      .select('id')
+      .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+    if (oldAccounts && oldAccounts.length > 0) {
+      const { error } = await supabaseServer
+        .from('accounts')
+        .update({ user_id: normalizedEmail })
+        .or(`user_id.ilike.%owner_%,user_id.ilike.%mem_%`)
+
+      if (!error) totalMigrated += oldAccounts.length
+    }
+
+    if (totalMigrated > 0) {
+      console.log(`[Migration] Migré ${totalMigrated} éléments vers ${normalizedEmail}`)
+    }
+
+    return { migrated: true, count: totalMigrated }
+  } catch (error) {
+    console.error('[Migration] Erreur:', error)
+    return { migrated: false, error: error.message }
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -16,8 +83,11 @@ export default async function handler(req, res) {
 
   // Check if email is in allowed list (owner bypass)
   if (allowedEmails.includes(normalizedEmail)) {
+    // Migrer les anciennes données vers cet email
+    await migrateUserData(normalizedEmail)
+
     const user = {
-      id: 'owner_' + Date.now(),
+      id: normalizedEmail, // IMPORTANT: Utiliser l'email comme ID stable
       email: normalizedEmail,
       isOwner: true,
     }
@@ -125,8 +195,11 @@ export default async function handler(req, res) {
     if (validMembership) {
       console.log(`[Whop Auth] SUCCESS - Valid membership found:`, validMembership.id)
 
+      // Migrer les anciennes données vers cet email
+      await migrateUserData(normalizedEmail)
+
       const user = {
-        id: validMembership.id,
+        id: normalizedEmail, // IMPORTANT: Utiliser l'email comme ID stable
         email: normalizedEmail,
         membership_id: validMembership.id,
         product_id: validMembership.product_id,

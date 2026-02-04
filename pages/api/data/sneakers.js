@@ -7,7 +7,9 @@ function getUserIdFromCookies(req) {
   if (cookies.whop_user) {
     try {
       const userData = JSON.parse(decodeURIComponent(cookies.whop_user))
-      return userData.id || userData.email // Utiliser l'ID ou l'email comme user_id
+      // IMPORTANT: Toujours utiliser l'email comme user_id car c'est stable
+      // L'ID peut changer (ex: owner_xxx est généré avec Date.now())
+      return userData.email || userData.id
     } catch (e) {
       console.error('Failed to parse whop_user cookie:', e)
       return null
