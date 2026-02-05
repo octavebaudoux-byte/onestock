@@ -19,6 +19,29 @@ function getUserIdFromCookies(req) {
   return null
 }
 
+// Logger les opérations importantes
+async function logOperation(operation, userId, details) {
+  try {
+    console.log(`[AUDIT] ${new Date().toISOString()} | ${operation} | user=${userId} | ${JSON.stringify(details)}`)
+
+    // Sauvegarder dans une table de logs si elle existe
+    if (supabaseServer) {
+      await supabaseServer
+        .from('audit_logs')
+        .insert({
+          operation,
+          user_id: userId,
+          details: JSON.stringify(details),
+          created_at: new Date().toISOString()
+        })
+        .then(() => {})
+        .catch(() => {}) // Silencieux si la table n'existe pas
+    }
+  } catch (e) {
+    // Ne pas bloquer l'opération si le log échoue
+  }
+}
+
 export default async function handler(req, res) {
   // Vérifier l'authentification
   const userId = getUserIdFromCookies(req)
@@ -64,6 +87,10 @@ export default async function handler(req, res) {
           .single()
 
         if (error) throw error
+
+        // Log l'ajout
+        await logOperation('ADD_SNEAKER', userId, { id: data.id, name: data.name })
+
         return res.status(201).json(data)
       }
 
@@ -96,6 +123,14 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Missing sneaker ID' })
         }
 
+        // D'abord récupérer les infos de la sneaker pour le log
+        const { data: sneakerToDelete } = await supabaseServer
+          .from('sneakers')
+          .select('name, brand, buy_price')
+          .eq('id', id)
+          .eq('user_id', userId)
+          .single()
+
         const { error } = await supabaseServer
           .from('sneakers')
           .delete()
@@ -103,6 +138,15 @@ export default async function handler(req, res) {
           .eq('user_id', userId) // Important: vérifier que c'est bien la sneaker de cet user
 
         if (error) throw error
+
+        // Log la suppression avec les détails
+        await logOperation('DELETE_SNEAKER', userId, {
+          id,
+          name: sneakerToDelete?.name,
+          brand: sneakerToDelete?.brand,
+          buyPrice: sneakerToDelete?.buy_price
+        })
+
         return res.status(200).json({ success: true })
       }
 
