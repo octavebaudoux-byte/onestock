@@ -163,28 +163,28 @@ export default function Inventory() {
       </Head>
 
       <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport}>
-        <div className="p-8">
+        <div className="p-4 md:p-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-4 md:mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{t('inventory.title')}</h1>
-              <p className="text-gray-400">
+              <h1 className="text-xl md:text-3xl font-bold mb-1 md:mb-2">{t('inventory.title')}</h1>
+              <p className="text-xs md:text-base text-gray-400">
                 {stockCount} {t('inventory.inStock')} • {soldCount} {t('inventory.sold')} • {formatPrice(totalValue)} {t('inventory.value')}
               </p>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-6">
+          {/* Filters - Compact sur mobile */}
+          <div className="flex flex-wrap gap-2 md:gap-4 mb-4 md:mb-6">
             {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+            <div className="relative flex-1 min-w-[150px] md:min-w-[200px]">
+              <Search className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-500" />
               <input
                 type="text"
                 placeholder={t('inventory.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10"
+                className="w-full pl-8 md:pl-10 text-sm md:text-base py-2 md:py-2.5"
               />
             </div>
 
@@ -192,18 +192,18 @@ export default function Inventory() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="min-w-[140px]"
+              className="min-w-[100px] md:min-w-[140px] text-sm md:text-base py-2 md:py-2.5"
             >
               <option value="all">{t('inventory.allStatuses')}</option>
               <option value="stock">{t('inventory.inStock')}</option>
               <option value="sold">{t('inventory.sold')}</option>
             </select>
 
-            {/* Brand filter */}
+            {/* Brand filter - caché sur mobile */}
             <select
               value={filterBrand}
               onChange={(e) => setFilterBrand(e.target.value)}
-              className="min-w-[140px]"
+              className="hidden md:block min-w-[140px]"
             >
               <option value="all">{t('inventory.allBrands')}</option>
               {brandsInStock.map(brand => (
@@ -211,11 +211,11 @@ export default function Inventory() {
               ))}
             </select>
 
-            {/* Sort */}
+            {/* Sort - caché sur mobile */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="min-w-[160px]"
+              className="hidden md:block min-w-[160px]"
             >
               <option value="date">{t('inventory.sortRecent')}</option>
               <option value="name">{t('inventory.sortName')}</option>
@@ -226,17 +226,17 @@ export default function Inventory() {
           </div>
 
           {/* Results count */}
-          <div className="text-sm text-gray-500 mb-4">
+          <div className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4">
             {filteredSneakers.length} {filteredSneakers.length > 1 ? t('inventory.resultsPlural') : t('inventory.results')}
           </div>
 
-          {/* Grid */}
+          {/* Grid - 2 colonnes sur mobile */}
           {filteredSneakers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center sm:justify-items-start px-4 sm:px-0">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 px-0">
               {filteredSneakers.map((sneaker, index) => (
                 <div
                   key={sneaker._uniqueKey || sneaker.id}
-                  className="w-full flex justify-center sm:justify-start animate-slideUp"
+                  className="w-full animate-slideUp"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <SneakerCard

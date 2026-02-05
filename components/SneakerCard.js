@@ -37,7 +37,7 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
   }
 
   return (
-    <div className="group relative bg-gradient-to-br from-dark-800/90 via-dark-800 to-dark-900/90 border-2 border-blue-500/30 rounded-2xl overflow-hidden hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 w-full max-w-[280px] hover:scale-[1.02]">
+    <div className="group relative bg-gradient-to-br from-dark-800/90 via-dark-800 to-dark-900/90 border border-blue-500/30 md:border-2 rounded-xl md:rounded-2xl overflow-hidden hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 w-full max-w-[180px] md:max-w-[280px] hover:scale-[1.02]">
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
@@ -47,10 +47,10 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
           <img
             src={sneaker.imageUrl}
             alt={sneaker.name}
-            className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain p-2 md:p-3 group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="text-5xl">👟</div>
+          <div className="text-3xl md:text-5xl">👟</div>
         )}
 
         {/* Overlay gradient */}
@@ -102,25 +102,25 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
       </div>
 
       {/* Content */}
-      <div className="p-3 space-y-2">
+      <div className="p-2 md:p-3 space-y-1.5 md:space-y-2">
         <div>
-          <h3 className="text-sm font-bold text-white truncate group-hover:text-cyan-400 transition-colors">
+          <h3 className="text-xs md:text-sm font-bold text-white truncate group-hover:text-cyan-400 transition-colors">
             {sneaker.name}
           </h3>
-          <p className="text-xs text-gray-400 truncate mt-1">
+          <p className="text-[10px] md:text-xs text-gray-400 truncate mt-0.5 md:mt-1">
             <span className="font-medium">{sneaker.size}</span> • {sneaker.sku || 'N/A'}
           </p>
         </div>
 
         {/* Prix avec design amélioré */}
-        <div className="flex justify-between items-center p-2 bg-dark-900/50 rounded-lg border border-gray-700/50">
+        <div className="flex justify-between items-center p-1.5 md:p-2 bg-dark-900/50 rounded-lg border border-gray-700/50">
           <div className="text-left">
-            <div className="text-xs text-gray-500">{t('card.buy')}</div>
-            <div className="text-xs font-semibold text-gray-300">{formatPrice(sneaker.buyPrice)}</div>
+            <div className="text-[10px] md:text-xs text-gray-500">{t('card.buy')}</div>
+            <div className="text-[10px] md:text-xs font-semibold text-gray-300">{formatPrice(sneaker.buyPrice)}</div>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-500">{t('card.sell')}</div>
-            <div className="text-xs font-bold text-cyan-400">
+            <div className="text-[10px] md:text-xs text-gray-500">{t('card.sell')}</div>
+            <div className="text-[10px] md:text-xs font-bold text-cyan-400">
               {sneaker.sellPrice ? formatPrice(sneaker.sellPrice) : '—'}
             </div>
           </div>
@@ -128,13 +128,13 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
 
         {/* Profit pour les vendus */}
         {sneaker.status === 'sold' && profit !== null && (
-          <div className={`py-2 px-3 rounded-lg text-center font-bold shadow-md ${
+          <div className={`py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-center font-bold shadow-md ${
             profit >= 0
               ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-400 border border-cyan-500/30'
               : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30'
           }`}>
-            <div className="text-xs text-gray-400 mb-1">{t('card.profit')}</div>
-            <div className="text-sm">
+            <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">{t('card.profit')}</div>
+            <div className="text-xs md:text-sm">
               {profit >= 0 ? '+' : ''}{formatPrice(profit)}
             </div>
           </div>
@@ -142,18 +142,18 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
 
         {/* Profit potentiel pour les items en stock */}
         {sneaker.status === 'stock' && potentialProfit !== null && (
-          <div className={`py-2 px-3 rounded-lg text-center font-bold shadow-md ${
+          <div className={`py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-center font-bold shadow-md ${
             potentialProfit >= 0
               ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-400 border border-purple-500/30'
               : 'bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 border border-orange-500/30'
           }`}>
-            <div className="text-xs text-gray-400 mb-1">
-              {language === 'fr' ? 'Profit potentiel' : 'Potential profit'}
+            <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">
+              {language === 'fr' ? 'Profit pot.' : 'Est. profit'}
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm">
+            <div className="flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm">
               <span>{potentialProfit >= 0 ? '+' : ''}{formatPrice(potentialProfit)}</span>
               {potentialROI !== null && (
-                <span className="text-xs">
+                <span className="text-[10px] md:text-xs hidden md:inline">
                   ({potentialROI >= 0 ? '+' : ''}{potentialROI.toFixed(0)}%)
                 </span>
               )}
@@ -161,9 +161,9 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
           </div>
         )}
 
-        {/* Badges plateformes de mise en vente */}
+        {/* Badges plateformes de mise en vente - caché sur mobile */}
         {sneaker.status === 'stock' && sneaker.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="hidden md:flex flex-wrap gap-1">
             {sneaker.listedOnPlatforms.map((platform, idx) => (
               <div key={idx} className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <span className="text-xs text-blue-400">📢</span>
@@ -175,53 +175,45 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
 
         {/* Toggles pour vendus */}
         {sneaker.status === 'sold' && (
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2">
             <button
               onClick={handleTogglePayment}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg font-semibold text-xs transition-all duration-200 active:scale-95 shadow-md ${
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 md:py-2 rounded-lg font-semibold text-[10px] md:text-xs transition-all duration-200 active:scale-95 shadow-md ${
                 sneaker.paymentStatus === 'received'
-                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border-2 border-emerald-500/50 hover:border-emerald-400'
-                  : 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-yellow-300 border-2 border-yellow-500/40 hover:border-yellow-400'
+                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border border-emerald-500/50 md:border-2'
+                  : 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-yellow-300 border border-yellow-500/40 md:border-2'
               }`}
             >
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">{sneaker.paymentStatus === 'received' ? t('card.paid') : t('card.waiting')}</span>
+              <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
             </button>
             <button
               onClick={handleToggleDelivery}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg font-semibold text-xs transition-all duration-200 active:scale-95 shadow-md ${
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 md:py-2 rounded-lg font-semibold text-[10px] md:text-xs transition-all duration-200 active:scale-95 shadow-md ${
                 sneaker.deliveryStatus === 'delivered'
-                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border-2 border-emerald-500/50 hover:border-emerald-400'
-                  : 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-yellow-300 border-2 border-yellow-500/40 hover:border-yellow-400'
+                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border border-emerald-500/50 md:border-2'
+                  : 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-yellow-300 border border-yellow-500/40 md:border-2'
               }`}
             >
-              <Package className="w-4 h-4" />
-              <span className="hidden sm:inline">{sneaker.deliveryStatus === 'delivered' ? t('card.shipped') : t('card.shipping')}</span>
+              <Package className="w-3 h-3 md:w-4 md:h-4" />
             </button>
           </div>
         )}
 
         {/* Boutons pour stock */}
         {sneaker.status === 'stock' && (
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2">
             <button
               onClick={handleToggleReceived}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 shadow-md ${
+              className={`flex-1 flex items-center justify-center gap-1 md:gap-2 py-2 md:py-3 rounded-lg md:rounded-xl font-semibold text-[10px] md:text-sm transition-all duration-200 active:scale-95 shadow-md ${
                 sneaker.itemReceived
-                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border-2 border-emerald-500/50 hover:border-emerald-400'
-                  : 'bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-300 border-2 border-amber-500/50 hover:border-amber-400'
+                  ? 'bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 text-emerald-300 border border-emerald-500/50 md:border-2'
+                  : 'bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-300 border border-amber-500/50 md:border-2'
               }`}
             >
               {sneaker.itemReceived ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t('card.received')}</span>
-                </>
+                <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
               ) : (
-                <>
-                  <Truck className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t('card.inTransit')}</span>
-                </>
+                <Truck className="w-3 h-3 md:w-4 md:h-4" />
               )}
             </button>
             <button
@@ -229,10 +221,9 @@ export default function SneakerCard({ sneaker, onEdit, onDelete, onToggle, onSel
                 e.stopPropagation()
                 if (onSell) onSell(sneaker)
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 shadow-md bg-gradient-to-r from-cyan-600 to-cyan-500 text-white border-2 border-cyan-500/50 hover:border-cyan-400"
+              className="flex-1 flex items-center justify-center gap-1 md:gap-2 py-2 md:py-3 rounded-lg md:rounded-xl font-semibold text-[10px] md:text-sm transition-all duration-200 active:scale-95 shadow-md bg-gradient-to-r from-cyan-600 to-cyan-500 text-white border border-cyan-500/50 md:border-2"
             >
-              <DollarSign className="w-4 h-4" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Vendre' : 'Sell'}</span>
+              <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
             </button>
           </div>
         )}
