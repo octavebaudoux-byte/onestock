@@ -14,8 +14,13 @@ export default function LoginPage() {
   // Check if already logged in
   useEffect(() => {
     const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=')
-      acc[key] = value
+      const trimmed = cookie.trim()
+      const eqIndex = trimmed.indexOf('=')
+      if (eqIndex > 0) {
+        const key = trimmed.substring(0, eqIndex)
+        const value = trimmed.substring(eqIndex + 1)
+        acc[key] = value
+      }
       return acc
     }, {})
 
