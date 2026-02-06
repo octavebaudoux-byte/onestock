@@ -65,8 +65,15 @@ export default async function handler(req, res) {
       })
     }
 
-    const memberships = data.data || []
-    console.log(`[Whop Auth] Found ${memberships.length} memberships for ${normalizedEmail}`)
+    const allMemberships = data.data || []
+
+    // CRITICAL FIX: Filtrer UNIQUEMENT les memberships qui correspondent EXACTEMENT à l'email recherché
+    // L'API Whop retourne tous les memberships si le filtre email ne fonctionne pas correctement
+    const memberships = allMemberships.filter(m =>
+      m.email && m.email.trim().toLowerCase() === normalizedEmail
+    )
+
+    console.log(`[Whop Auth] Found ${memberships.length} matching memberships for ${normalizedEmail} (filtered from ${allMemberships.length} total)`)
 
     // Find valid membership
     let validMembership = null
@@ -114,6 +121,7 @@ export default async function handler(req, res) {
 
       let errorMsg = 'Aucun abonnement actif trouvé pour cet email'
 
+      // Seulement afficher ce message si on a trouvé des memberships pour CET email
       if (memberships.length > 0) {
         const statuses = memberships.map(m => m.status).join(', ')
         errorMsg = `Abonnement trouvé mais non actif (${statuses}). Vérifie ton paiement sur Whop.`
