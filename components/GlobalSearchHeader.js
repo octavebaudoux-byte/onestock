@@ -18,7 +18,15 @@ export default function GlobalSearchHeader() {
     }
   }
 
-  const userName = user?.username || user?.email?.split('@')[0] || 'User'
+  // Extraire le nom d'utilisateur de l'email ou utiliser le username
+  const getUserName = () => {
+    if (!user) return 'User'
+    if (user.username) return user.username
+    if (user.email) return user.email.split('@')[0]
+    if (user.id && user.id.includes('@')) return user.id.split('@')[0]
+    return 'User'
+  }
+  const userName = getUserName()
 
   return (
     <div className="sticky top-0 z-20 bg-dark-900/95 backdrop-blur-lg border-b border-blue-500/20">

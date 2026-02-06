@@ -31,12 +31,14 @@ export function WhopAuthProvider({ children }) {
     if (cookies.whop_user) {
       try {
         const userData = JSON.parse(decodeURIComponent(cookies.whop_user))
+        console.log('[Auth] User data from cookie:', userData)
         setUser(userData)
       } catch (e) {
-        console.error('Failed to parse whop_user cookie')
+        console.error('Failed to parse whop_user cookie:', e, cookies.whop_user)
         setUser(null)
       }
     } else {
+      console.log('[Auth] No whop_user cookie found')
       setUser(null)
     }
 
