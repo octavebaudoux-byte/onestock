@@ -119,37 +119,39 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
         </PageTransition>
       </main>
 
-      {/* Mobile bottom navigation - icons only */}
+      {/* Mobile bottom navigation - compact with all items */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-dark-800/95 backdrop-blur-lg border-t border-blue-500/20 z-30 safe-bottom">
-        <div className="flex items-center justify-around px-1 py-3">
-          {navItems.filter(item => ['/', '/inventory', '/sales', '/stats', '/calendar'].includes(item.href)).map((item) => {
+        <div className="flex items-center justify-between px-2 py-2">
+          {/* Navigation items - all of them */}
+          {navItems.map((item) => {
             const isActive = router.pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                    ? 'bg-blue-600 text-white'
                     : 'text-gray-400 active:scale-95'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-4 h-4" />
               </Link>
             )
           })}
+          {/* Action buttons */}
           <button
             onClick={onAddClick}
-            className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-transform"
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 text-white active:scale-95 transition-transform"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
           </button>
           {onAddSaleClick && (
             <button
               onClick={onAddSaleClick}
-              className="flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 active:scale-95 transition-transform"
+              className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-600 text-white active:scale-95 transition-transform"
             >
-              <DollarSign className="w-5 h-5" />
+              <DollarSign className="w-4 h-4" />
             </button>
           )}
         </div>
