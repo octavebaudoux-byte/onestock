@@ -109,7 +109,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     // Toujours effacer les anciens résultats quand la query change
     setSearchResults([])
 
-    if (searchQuery.length < 3) {
+    if (searchQuery.length < 2) {
       setApiError(null)
       setIsSearching(false)
       return
@@ -156,7 +156,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
           setIsSearching(false)
         }
       }
-    }, 500)
+    }, 300)
 
     return () => {
       clearTimeout(timeoutId)
@@ -383,7 +383,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                 </div>
               )}
 
-              {showSearch && searchQuery.length >= 3 && searchResults.length === 0 && (
+              {showSearch && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
                 <div className="absolute z-20 w-full mt-2 bg-dark-700 border border-gray-600 rounded-xl p-4 text-center text-gray-500 text-sm">
                   Aucun résultat pour "{searchQuery}"
                 </div>

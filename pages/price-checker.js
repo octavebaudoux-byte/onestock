@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Head from 'next/head'
 import { Search, TrendingUp, DollarSign, Loader2, X } from 'lucide-react'
 import Layout from '../components/Layout'
@@ -11,36 +11,69 @@ export default function PriceChecker() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [selectedSneaker, setSelectedSneaker] = useState(null)
+  const debounceRef = useRef(null)
+  const abortRef = useRef(null)
 
-  const handleSearch = async () => {
-    if (searchQuery.length < 2) return
+  const performSearch = useCallback(async (query) => {
+    if (query.length < 2) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+
+    if (abortRef.current) abortRef.current.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
 
     setIsSearching(true)
 
     try {
-      // Try API first
-      const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(searchQuery)}&limit=20`)
+      const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(query)}&limit=20`, {
+        signal: controller.signal,
+      })
+
+      if (controller.signal.aborted) return
 
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.results || [])
       } else {
-        // Fallback to local search
-        const localResults = searchSneakers(searchQuery)
+        const localResults = searchSneakers(query)
         setSearchResults(localResults)
       }
     } catch (error) {
-      // Fallback to local search
-      const localResults = searchSneakers(searchQuery)
+      if (error.name === 'AbortError') return
+      const localResults = searchSneakers(query)
       setSearchResults(localResults)
     } finally {
-      setIsSearching(false)
+      if (!controller.signal.aborted) setIsSearching(false)
     }
-  }
+  }, [])
+
+  // Auto-search avec debounce quand l'utilisateur tape
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    if (searchQuery.length < 2) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
+    debounceRef.current = setTimeout(() => {
+      performSearch(searchQuery)
+    }, 300)
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [searchQuery, performSearch])
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      handleSearch()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      performSearch(searchQuery)
     }
   }
 
@@ -97,7 +130,7 @@ export default function PriceChecker() {
                   )}
                 </div>
                 <button
-                  onClick={handleSearch}
+                  onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); performSearch(searchQuery) }}
                   disabled={isSearching || searchQuery.length < 2}
                   className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-600 text-white font-bold rounded-2xl transition-all disabled:cursor-not-allowed flex items-center gap-2"
                 >

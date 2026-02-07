@@ -8,28 +8,36 @@ export default function SneakerSearch({ onSelect, onClose }) {
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
+  const abortRef = useRef(null)
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
   useEffect(() => {
-    // Debounce la recherche
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (abortRef.current) abortRef.current.abort()
 
     if (query.length < 2) {
       setResults([])
+      setIsLoading(false)
       return
     }
 
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true)
-      setError(null)
+    setIsLoading(true)
+    setError(null)
 
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    debounceRef.current = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/search-sneaker?query=${encodeURIComponent(query)}`)
+        const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(query)}&limit=20`, {
+          signal: controller.signal,
+        })
+
+        if (controller.signal.aborted) return
+
         const data = await response.json()
 
         if (response.ok) {
@@ -38,16 +46,16 @@ export default function SneakerSearch({ onSelect, onClose }) {
           setError(data.error || 'Erreur lors de la recherche')
         }
       } catch (err) {
+        if (err.name === 'AbortError') return
         setError('Impossible de contacter le serveur')
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) setIsLoading(false)
       }
-    }, 500)
+    }, 300)
 
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
-      }
+      clearTimeout(debounceRef.current)
+      controller.abort()
     }
   }, [query])
 

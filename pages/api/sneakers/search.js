@@ -1,18 +1,38 @@
 // API Route pour la recherche de sneakers via KicksDB
 // La clé API est stockée côté serveur (variable d'environnement)
+// Cache serveur pour éviter les appels API répétés
 
 const API_BASE_URL = 'https://api.kicks.dev/v3'
 
-export default async function handler(req, res) {
-  // Désactiver le cache pour éviter les résultats périmés
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+// Cache serveur en mémoire (persiste entre les requêtes en dev/prod)
+const serverCache = new Map()
+const CACHE_TTL = 3 * 60 * 1000 // 3 minutes
 
+function getCached(key) {
+  const entry = serverCache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    serverCache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function setCache(key, data) {
+  // Limiter la taille du cache à 200 entrées
+  if (serverCache.size > 200) {
+    const oldest = serverCache.keys().next().value
+    serverCache.delete(oldest)
+  }
+  serverCache.set(key, { data, timestamp: Date.now() })
+}
+
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const { query, limit = 20 } = req.query
-  console.log('[API Search] Query:', query, '| Limit:', limit)
 
   if (!query || query.length < 2) {
     return res.status(400).json({ error: 'Query too short', results: [] })
@@ -26,9 +46,17 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API not configured', results: [] })
   }
 
+  // Vérifier le cache serveur
+  const cacheKey = `${query.toLowerCase().trim()}:${limit}`
+  const cached = getCached(cacheKey)
+  if (cached) {
+    res.setHeader('Cache-Control', 'public, s-maxage=180, stale-while-revalidate=300')
+    res.setHeader('X-Cache', 'HIT')
+    return res.status(200).json({ results: cached, error: null })
+  }
+
   try {
     const url = `${API_BASE_URL}/stockx/products?query=${encodeURIComponent(query)}&limit=${limit}`
-    console.log('[API Search] Fetching:', url)
 
     const response = await fetch(url, {
       method: 'GET',
@@ -48,10 +76,6 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json()
-    console.log('[API Search] Got', (data.data || []).length, 'results from KicksDB')
-    if (data.data?.[0]) {
-      console.log('[API Search] First result:', data.data[0].title, '-', data.data[0].brand)
-    }
 
     // Transformer les données
     const results = (data.data || []).map(product => ({
@@ -64,6 +88,11 @@ export default async function handler(req, res) {
       lowestPrice: product.min_price || null,
     }))
 
+    // Mettre en cache serveur
+    setCache(cacheKey, results)
+
+    res.setHeader('Cache-Control', 'public, s-maxage=180, stale-while-revalidate=300')
+    res.setHeader('X-Cache', 'MISS')
     return res.status(200).json({ results, error: null })
 
   } catch (error) {
