@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { loadSneakers, addSneaker, updateSneaker, deleteSneaker } from '../lib/database'
 import { generateId } from '../lib/store'
+import { useNotifications } from '../contexts/NotificationContext'
 
 // Hook pour gérer les données - 100% Supabase, chaque utilisateur a ses données isolées
 export function useData() {
   const { user } = useWhopAuth()
   const [sneakers, setSneakers] = useState([])
   const [loading, setLoading] = useState(true)
+  const { updateSneakers } = useNotifications()
 
   const userId = user?.email || null
 
@@ -27,6 +29,11 @@ export function useData() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Alimenter automatiquement le contexte de notifications
+  useEffect(() => {
+    updateSneakers(sneakers)
+  }, [sneakers, updateSneakers])
 
   const add = useCallback(async (sneaker) => {
     if (!userId) return null

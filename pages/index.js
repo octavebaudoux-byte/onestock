@@ -6,7 +6,6 @@ import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
 import ConfirmDialog from '../components/ConfirmDialog'
-import NotificationBanner from '../components/NotificationBanner'
 import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useExpenses } from '../hooks/useExpenses'
@@ -142,9 +141,6 @@ export default function Dashboard() {
 
       <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal}>
         <div className="p-4 md:p-8 space-y-4 md:space-y-8">
-          {/* Notifications */}
-          <NotificationBanner sneakers={sneakers} />
-
           {/* Header avec effet gradient - Compact sur mobile */}
           <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-blue-600/20 border border-blue-500/30 p-4 md:p-8">
             <div className="absolute inset-0 opacity-50 hidden md:block" style={{ backgroundImage: 'radial-gradient(circle, rgba(59,130,246,0.15) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />

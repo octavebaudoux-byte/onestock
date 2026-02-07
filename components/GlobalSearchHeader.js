@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
-import { Search, X } from 'lucide-react'
+import { Search, X, Bell } from 'lucide-react'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useNotifications } from '../contexts/NotificationContext'
+import NotificationPanel from './NotificationPanel'
 
 export default function GlobalSearchHeader() {
   const router = useRouter()
   const { user } = useWhopAuth()
   const { language } = useLanguage()
+  const { count, togglePanel, panelOpen } = useNotifications()
   const [searchQuery, setSearchQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
 
@@ -66,6 +69,27 @@ export default function GlobalSearchHeader() {
               )}
             </div>
           </form>
+
+          {/* Notification Bell */}
+          <div className="relative shrink-0">
+            <button
+              data-notification-bell
+              onClick={togglePanel}
+              className={`relative p-1.5 md:p-2 rounded-lg transition-all ${
+                panelOpen
+                  ? 'bg-cyan-500/20 text-cyan-400'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Bell className="w-4 h-4 md:w-5 md:h-5" />
+              {count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-black text-[9px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full px-1">
+                  {count}
+                </span>
+              )}
+            </button>
+            <NotificationPanel />
+          </div>
         </div>
       </div>
     </div>

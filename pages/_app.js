@@ -6,6 +6,7 @@ import { WhopAuthProvider } from '../contexts/WhopAuthContext'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import { LanguageProvider } from '../contexts/LanguageContext'
 import { ToastProvider } from '../contexts/ToastContext'
+import { NotificationProvider } from '../contexts/NotificationContext'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -38,9 +39,11 @@ export default function App({ Component, pageProps }) {
       <LanguageProvider>
         <ToastProvider>
           <WhopAuthProvider>
-            <AnimatePresence mode="wait" initial={false}>
-              <Component {...pageProps} key={router.route} />
-            </AnimatePresence>
+            <NotificationProvider>
+              <AnimatePresence mode="wait" initial={false}>
+                <Component {...pageProps} key={router.route} />
+              </AnimatePresence>
+            </NotificationProvider>
           </WhopAuthProvider>
         </ToastProvider>
       </LanguageProvider>
