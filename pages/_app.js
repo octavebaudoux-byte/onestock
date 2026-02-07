@@ -22,6 +22,15 @@ export default function App({ Component, pageProps }) {
           console.log('❌ Erreur Service Worker:', error)
         })
     }
+
+    // Demander la permission de notifications après 5 secondes
+    const notifTimer = setTimeout(() => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission()
+      }
+    }, 5000)
+
+    return () => clearTimeout(notifTimer)
   }, [])
 
   return (

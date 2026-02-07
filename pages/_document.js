@@ -16,13 +16,14 @@ export default function Document() {
         {/* Manifest */}
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Apple Touch Icons */}
-        <link rel="apple-touch-icon" href="/logo.svg" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/logo.svg" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/logo.svg" />
+        {/* Apple Touch Icons - PNG requis pour iOS */}
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
 
         {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
       </Head>
       <body>
         <Main />
