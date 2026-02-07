@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent } from 'lucide-react'
+import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent, LayoutGrid, List } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SaleCard from '../components/SaleCard'
+import SneakerRow from '../components/SneakerRow'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
@@ -18,6 +19,19 @@ export default function Sales() {
   const [timeRange, setTimeRange] = useState('all')
   const [modalMode, setModalMode] = useState('sale')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+
+  // Vue grille/liste
+  const [viewMode, setViewMode] = useState('grid')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('onestock_sales_view_mode')
+    if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  const toggleViewMode = (mode) => {
+    setViewMode(mode)
+    localStorage.setItem('onestock_sales_view_mode', mode)
+  }
 
   // Filtrer les ventes
   const sales = useMemo(() => {
@@ -320,25 +334,59 @@ export default function Sales() {
             </div>
           )}
 
-          {/* Sales list avec les nouvelles cards */}
+          {/* Sales list */}
           {sales.length > 0 ? (
             <div>
               <div className="flex items-center justify-between mb-3 md:mb-4">
-                <h2 className="text-base md:text-lg font-semibold text-white">{t('sales.history')}</h2>
-                <span className="text-xs md:text-sm text-gray-500">{sales.length} {sales.length > 1 ? t('sales.salesPlural') : t('sales.sale')}</span>
+                <h2 className="text-base md:text-lg font-semibold text-white">
+                  {t('sales.history')} <span className="text-xs md:text-sm text-gray-500 font-normal ml-1">{sales.length} {sales.length > 1 ? t('sales.salesPlural') : t('sales.sale')}</span>
+                </h2>
+                <div className="flex items-center gap-1 bg-dark-800 border border-blue-500/20 rounded-lg p-0.5">
+                  <button
+                    onClick={() => toggleViewMode('grid')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => toggleViewMode('list')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 px-0">
-                {sales.map((sneaker, index) => (
-                  <div key={sneaker.id} className="animate-slideUp w-full" style={{ animationDelay: `${index * 50}ms` }}>
-                    <SaleCard
-                      sneaker={sneaker}
-                      onEdit={handleEditSneaker}
-                      onDelete={handleDeleteSneaker}
-                      onToggle={handleToggle}
-                    />
-                  </div>
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 px-0">
+                  {sales.map((sneaker, index) => (
+                    <div key={sneaker.id} className="animate-slideUp w-full" style={{ animationDelay: `${index * 50}ms` }}>
+                      <SaleCard
+                        sneaker={sneaker}
+                        onEdit={handleEditSneaker}
+                        onDelete={handleDeleteSneaker}
+                        onToggle={handleToggle}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {sales.map((sneaker, index) => (
+                    <div key={sneaker.id} className="animate-slideUp" style={{ animationDelay: `${index * 30}ms` }}>
+                      <SneakerRow
+                        sneaker={sneaker}
+                        onEdit={handleEditSneaker}
+                        onDelete={handleDeleteSneaker}
+                        onToggle={handleToggle}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="card text-center py-8 md:py-16">

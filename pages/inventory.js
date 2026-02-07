@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Head from 'next/head'
-import { Search } from 'lucide-react'
+import { Search, LayoutGrid, List } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
+import SneakerRow from '../components/SneakerRow'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
@@ -16,6 +17,20 @@ export default function Inventory() {
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+
+  // Vue grille/liste
+  const [viewMode, setViewMode] = useState('grid')
+
+  // Charger le viewMode depuis localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('onestock_view_mode')
+    if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  const toggleViewMode = (mode) => {
+    setViewMode(mode)
+    localStorage.setItem('onestock_view_mode', mode)
+  }
 
   // Filtres
   const [searchTerm, setSearchTerm] = useState('')
@@ -225,31 +240,76 @@ export default function Inventory() {
             </select>
           </div>
 
-          {/* Results count */}
-          <div className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4">
-            {filteredSneakers.length} {filteredSneakers.length > 1 ? t('inventory.resultsPlural') : t('inventory.results')}
+          {/* Results count + View toggle */}
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="text-xs md:text-sm text-gray-500">
+              {filteredSneakers.length} {filteredSneakers.length > 1 ? t('inventory.resultsPlural') : t('inventory.results')}
+            </div>
+            <div className="flex items-center gap-1 bg-dark-800 border border-blue-500/20 rounded-lg p-0.5">
+              <button
+                onClick={() => toggleViewMode('grid')}
+                className={`p-1.5 rounded-md transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => toggleViewMode('list')}
+                className={`p-1.5 rounded-md transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Grid - 2 colonnes sur mobile */}
+          {/* Sneakers display */}
           {filteredSneakers.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 px-0">
-              {filteredSneakers.map((sneaker, index) => (
-                <div
-                  key={sneaker._uniqueKey || sneaker.id}
-                  className="w-full animate-slideUp"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <SneakerCard
-                    sneaker={sneaker}
-                    onEdit={handleEditSneaker}
-                    onDelete={handleDeleteSneaker}
-                    onToggle={handleToggle}
-                    onSell={handleSellSneaker}
-                    instanceIndex={sneaker._instanceIndex || 0}
-                  />
-                </div>
-              ))}
-            </div>
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 px-0">
+                {filteredSneakers.map((sneaker, index) => (
+                  <div
+                    key={sneaker._uniqueKey || sneaker.id}
+                    className="w-full animate-slideUp"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <SneakerCard
+                      sneaker={sneaker}
+                      onEdit={handleEditSneaker}
+                      onDelete={handleDeleteSneaker}
+                      onToggle={handleToggle}
+                      onSell={handleSellSneaker}
+                      instanceIndex={sneaker._instanceIndex || 0}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {filteredSneakers.map((sneaker, index) => (
+                  <div
+                    key={sneaker._uniqueKey || sneaker.id}
+                    className="animate-slideUp"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                  >
+                    <SneakerRow
+                      sneaker={sneaker}
+                      onEdit={handleEditSneaker}
+                      onDelete={handleDeleteSneaker}
+                      onToggle={handleToggle}
+                      onSell={handleSellSneaker}
+                      instanceIndex={sneaker._instanceIndex || 0}
+                    />
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
             <div className="card text-center py-16">
               <div className="text-5xl mb-4">🔍</div>
