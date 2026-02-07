@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { Search, TrendingUp, DollarSign, Loader2, X } from 'lucide-react'
 import Layout from '../components/Layout'
 import { searchSneakers } from '../lib/sneakersDb'
+import { getCachedResults, setCachedResults } from '../lib/searchCache'
 import { useLanguage } from '../contexts/LanguageContext'
 
 export default function PriceChecker() {
@@ -36,21 +37,19 @@ export default function PriceChecker() {
 
       if (response.ok) {
         const data = await response.json()
-        setSearchResults(data.results || [])
-      } else {
-        const localResults = searchSneakers(query)
-        setSearchResults(localResults)
+        if (data.results?.length > 0) {
+          setSearchResults(data.results)
+          setCachedResults(query, data.results)
+        }
       }
     } catch (error) {
       if (error.name === 'AbortError') return
-      const localResults = searchSneakers(query)
-      setSearchResults(localResults)
     } finally {
       if (!controller.signal.aborted) setIsSearching(false)
     }
   }, [])
 
-  // Auto-search avec debounce quand l'utilisateur tape
+  // Recherche instantanée : local immédiat + API en arrière-plan
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -60,10 +59,25 @@ export default function PriceChecker() {
       return
     }
 
+    // 1) Cache client : instantané
+    const cached = getCachedResults(searchQuery)
+    if (cached) {
+      setSearchResults(cached)
+      setIsSearching(false)
+      return
+    }
+
+    // 2) Résultats locaux instantanés
+    const localResults = searchSneakers(searchQuery)
+    if (localResults.length > 0) {
+      setSearchResults(localResults)
+    }
+
+    // 3) API en arrière-plan
     setIsSearching(true)
     debounceRef.current = setTimeout(() => {
       performSearch(searchQuery)
-    }, 300)
+    }, 150)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)

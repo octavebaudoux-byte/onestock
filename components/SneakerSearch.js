@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, Loader2, X } from 'lucide-react'
+import { searchSneakers } from '../lib/sneakersDb'
+import { getCachedResults, setCachedResults } from '../lib/searchCache'
 
 export default function SneakerSearch({ onSelect, onClose }) {
   const [query, setQuery] = useState('')
@@ -24,6 +26,21 @@ export default function SneakerSearch({ onSelect, onClose }) {
       return
     }
 
+    // 1) Cache client : instantané si déjà cherché
+    const cached = getCachedResults(query)
+    if (cached) {
+      setResults(cached)
+      setIsLoading(false)
+      return
+    }
+
+    // 2) Résultats locaux instantanés
+    const localResults = searchSneakers(query)
+    if (localResults.length > 0) {
+      setResults(localResults)
+    }
+
+    // 3) API en arrière-plan
     setIsLoading(true)
     setError(null)
 
@@ -37,21 +54,19 @@ export default function SneakerSearch({ onSelect, onClose }) {
         })
 
         if (controller.signal.aborted) return
-
         const data = await response.json()
 
-        if (response.ok) {
-          setResults(data.results || [])
-        } else {
-          setError(data.error || 'Erreur lors de la recherche')
+        if (response.ok && data.results?.length > 0) {
+          setResults(data.results)
+          setCachedResults(query, data.results)
         }
       } catch (err) {
         if (err.name === 'AbortError') return
-        setError('Impossible de contacter le serveur')
+        if (!localResults.length) setError('Impossible de contacter le serveur')
       } finally {
         if (!controller.signal.aborted) setIsLoading(false)
       }
-    }, 300)
+    }, 150)
 
     return () => {
       clearTimeout(debounceRef.current)

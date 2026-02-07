@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2, Receipt } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
+import { getCachedResults, setCachedResults } from '../lib/searchCache'
 import { useToast } from '../contexts/ToastContext'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
@@ -102,19 +103,32 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     setSearchResults([])
   }, [sneaker, isOpen, mode])
 
-  // Recherche avec debounce via API route (server-side pour éviter CORS)
+  // Recherche instantanée : résultats locaux immédiats + API en arrière-plan
   useEffect(() => {
     latestQueryRef.current = searchQuery
 
-    // Toujours effacer les anciens résultats quand la query change
-    setSearchResults([])
-
     if (searchQuery.length < 2) {
+      setSearchResults([])
       setApiError(null)
       setIsSearching(false)
       return
     }
 
+    // 1) Cache client : résultat instantané si déjà cherché
+    const cached = getCachedResults(searchQuery)
+    if (cached) {
+      setSearchResults(cached)
+      setIsSearching(false)
+      return
+    }
+
+    // 2) Résultats locaux INSTANTANÉS (0ms)
+    const localResults = searchSneakers(searchQuery)
+    if (localResults.length > 0) {
+      setSearchResults(localResults)
+    }
+
+    // 3) API en arrière-plan avec court debounce
     setIsSearching(true)
     setApiError(null)
 
@@ -122,41 +136,29 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     const queryAtRequest = searchQuery
 
     const timeoutId = setTimeout(async () => {
-      const fetchUrl = `/api/sneakers/search?query=${encodeURIComponent(queryAtRequest)}&limit=20`
-      console.log('[Search] Fetching for query:', queryAtRequest)
-
       try {
-        const response = await fetch(fetchUrl, {
+        const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(queryAtRequest)}&limit=20`, {
           signal: abortController.signal,
-          cache: 'no-store',
         })
 
         if (abortController.signal.aborted) return
-        // Vérifier que la query n'a pas changé pendant le fetch
         if (latestQueryRef.current !== queryAtRequest) return
 
         const data = await response.json()
-
-        // Double-vérification après parsing JSON
         if (latestQueryRef.current !== queryAtRequest) return
 
         if (response.ok && data.results?.length > 0) {
-          console.log('[Search] Got', data.results.length, 'results for:', queryAtRequest)
           setSearchResults(data.results)
-        } else {
-          setSearchResults(searchSneakers(queryAtRequest))
+          setCachedResults(queryAtRequest, data.results)
         }
       } catch (err) {
         if (err.name === 'AbortError') return
-        if (latestQueryRef.current !== queryAtRequest) return
-        console.error('[Search] Error:', err.message)
-        setSearchResults(searchSneakers(queryAtRequest))
       } finally {
         if (!abortController.signal.aborted && latestQueryRef.current === queryAtRequest) {
           setIsSearching(false)
         }
       }
-    }, 300)
+    }, 150)
 
     return () => {
       clearTimeout(timeoutId)
