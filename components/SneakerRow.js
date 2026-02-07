@@ -1,4 +1,4 @@
-import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package, DollarSign, Receipt, Eye } from 'lucide-react'
+import { Edit, Trash2, Truck, CheckCircle, CreditCard, Package, DollarSign, Receipt } from 'lucide-react'
 import { formatPrice } from '../lib/store'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -60,19 +60,34 @@ export default function SneakerRow({ sneaker, onEdit, onDelete, onToggle, onSell
         </div>
       </div>
 
+      {/* Plateformes de mise en vente */}
+      {sneaker.status === 'stock' && sneaker.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0 && (
+        <div className="shrink-0 hidden md:flex items-center gap-1">
+          {sneaker.listedOnPlatforms.map((platform, idx) => (
+            <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/30 rounded text-blue-300 font-medium">
+              {platform}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Prix achat */}
       <div className="shrink-0 text-right hidden md:block">
         <div className="text-[10px] text-gray-500">{t('card.buy')}</div>
         <div className="text-xs font-semibold text-gray-300">{formatPrice(sneaker.buyPrice)}</div>
       </div>
 
-      {/* Prix vente */}
+      {/* Prix vente / Prix cible */}
       <div className="shrink-0 text-right">
-        <div className="text-[10px] text-gray-500">{sneaker.status === 'sold' ? t('card.sell') : t('card.buy')}</div>
-        <div className="text-xs font-bold text-white">
+        <div className="text-[10px] text-gray-500">
+          {sneaker.status === 'sold' ? t('card.sell') : sneaker.targetSellPrice ? (language === 'fr' ? 'Cible' : 'Target') : t('card.buy')}
+        </div>
+        <div className={`text-xs font-bold ${sneaker.status === 'sold' ? 'text-cyan-400' : sneaker.targetSellPrice ? 'text-purple-400' : 'text-white'}`}>
           {sneaker.status === 'sold' && sneaker.sellPrice
             ? formatPrice(sneaker.sellPrice)
-            : formatPrice(sneaker.buyPrice)
+            : sneaker.targetSellPrice
+              ? formatPrice(sneaker.targetSellPrice)
+              : formatPrice(sneaker.buyPrice)
           }
         </div>
       </div>
@@ -82,6 +97,10 @@ export default function SneakerRow({ sneaker, onEdit, onDelete, onToggle, onSell
         {sneaker.status === 'sold' && profit !== null ? (
           <div className={`text-xs md:text-sm font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {profit >= 0 ? '+' : ''}{formatPrice(profit)}
+          </div>
+        ) : sneaker.status === 'stock' && sneaker.targetSellPrice ? (
+          <div className="text-xs font-bold text-purple-400/70">
+            ~{formatPrice(sneaker.targetSellPrice - sneaker.buyPrice - (sneaker.buyPrice * 0.10))}
           </div>
         ) : (
           <div className="text-xs text-gray-500">—</div>
