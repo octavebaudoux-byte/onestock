@@ -98,7 +98,7 @@ export default function NotificationPanel() {
                   <p className="text-[10px] text-gray-400 mt-0.5">{notif.subtitle}</p>
                 </div>
                 <button
-                  onClick={() => dismissNotif(notif.id)}
+                  onClick={() => dismissNotif(notif.id, notif)}
                   className="shrink-0 p-1 rounded hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
                   title={language === 'fr' ? 'Marquer comme lu' : 'Mark as read'}
                 >
