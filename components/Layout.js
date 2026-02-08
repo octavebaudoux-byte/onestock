@@ -23,6 +23,12 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
   const router = useRouter()
   const { t, language } = useLanguage()
 
+  const GmailIcon = ({ className }) => (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="currentColor"/>
+    </svg>
+  )
+
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
     { href: '/price-checker', icon: Search, label: language === 'fr' ? 'Prix' : 'Prices' },
@@ -32,6 +38,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
     { href: '/accounts', icon: User, label: language === 'fr' ? 'Comptes' : 'Accounts' },
     { href: '/stats', icon: TrendingUp, label: t('nav.stats') },
     { href: '/calendar', icon: Calendar, label: language === 'fr' ? 'Calendrier' : 'Calendar' },
+    { href: '/email', icon: GmailIcon, label: 'Email' },
     { href: '/settings', icon: Settings, label: t('nav.settings') },
   ]
 
