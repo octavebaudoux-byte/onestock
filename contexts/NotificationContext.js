@@ -1,7 +1,12 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useLanguage } from './LanguageContext'
 
-const NotificationContext = createContext({})
+const noop = () => {}
+const NotificationContext = createContext({
+  notifications: [], history: [], count: 0,
+  panelOpen: false, togglePanel: noop, closePanel: noop,
+  dismissNotif: noop, dismissAll: noop, updateSneakers: noop,
+})
 
 export function NotificationProvider({ children }) {
   const { language } = useLanguage()
