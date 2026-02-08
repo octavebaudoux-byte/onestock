@@ -229,46 +229,76 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Email Notifications */}
-          <div className="card p-4 md:p-6 mb-4 md:mb-6">
-            <div className="flex items-center gap-2 mb-4 md:mb-6">
-              <Mail className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />
-              <h2 className="text-lg md:text-xl font-semibold">
-                {language === 'fr' ? 'Notifications Email' : 'Email Notifications'}
-              </h2>
+          {/* Email Notifications - Gmail IMAP */}
+          <div className="card p-4 md:p-6 mb-4 md:mb-6 overflow-hidden">
+            {/* Header with Gmail branding */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-7 md:h-7">
+                  <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="#EA4335"/>
+                  <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="url(#gmail-grad)"/>
+                  <defs>
+                    <linearGradient id="gmail-grad" x1="0" y1="0" x2="24" y2="24">
+                      <stop offset="0%" stopColor="#EA4335"/>
+                      <stop offset="30%" stopColor="#FBBC04" stopOpacity="0.3"/>
+                      <stop offset="60%" stopColor="#34A853" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#4285F4"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold">
+                  {language === 'fr' ? 'Notifications Email' : 'Email Notifications'}
+                </h2>
+                <p className="text-[10px] md:text-xs text-gray-500">
+                  {language === 'fr' ? 'Connexion IMAP - Gmail & autres' : 'IMAP connection - Gmail & others'}
+                </p>
+              </div>
             </div>
 
-            <p className="text-xs md:text-sm text-gray-400 mb-4">
+            <p className="text-xs md:text-sm text-gray-400 mb-5 leading-relaxed">
               {language === 'fr'
-                ? 'Connecte ta boîte mail pour recevoir des notifications quand un email contient une phrase spécifique (ex: "Your item has sold").'
-                : 'Connect your mailbox to get notifications when an email contains a specific phrase (e.g. "Your item has sold").'}
+                ? 'Connecte ta boîte mail pour recevoir des notifications quand un email contient une phrase spécifique (ex: "Your item has sold"). Vérification automatique toutes les 15 minutes.'
+                : 'Connect your mailbox to get notifications when an email contains a specific phrase (e.g. "Your item has sold"). Automatic check every 15 minutes.'}
             </p>
 
-            {/* Connection status */}
+            {/* Connection status - connected */}
             {emailConfig ? (
-              <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl mb-4">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-sm text-emerald-300">
-                    {language === 'fr' ? 'Connecté :' : 'Connected:'} <span className="font-semibold text-white">{emailConfig.email}</span>
-                  </span>
-                  {emailConfig.last_check_at && (
-                    <span className="text-[10px] text-gray-500 ml-2">
-                      {language === 'fr' ? 'Dernier check:' : 'Last check:'} {new Date(emailConfig.last_check_at).toLocaleString()}
-                    </span>
-                  )}
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{emailConfig.email}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[10px] text-emerald-400/80">
+                          {language === 'fr' ? 'Connecté' : 'Connected'}
+                        </span>
+                        {emailConfig.last_check_at && (
+                          <span className="text-[10px] text-gray-500">
+                            &middot; {language === 'fr' ? 'Dernier check' : 'Last check'}: {new Date(emailConfig.last_check_at).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={disconnectEmail}
+                    className="text-xs text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg hover:bg-red-500/10 border border-red-500/20 transition-colors shrink-0"
+                  >
+                    {language === 'fr' ? 'Déconnecter' : 'Disconnect'}
+                  </button>
                 </div>
-                <button
-                  onClick={disconnectEmail}
-                  className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
-                >
-                  {language === 'fr' ? 'Déconnecter' : 'Disconnect'}
-                </button>
               </div>
             ) : (
-              <div className="space-y-3 mb-4">
+              /* Connection form */
+              <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 mb-5 space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-gray-300 mb-1.5">
                     {language === 'fr' ? 'Adresse email' : 'Email address'}
                   </label>
                   <input
@@ -276,20 +306,20 @@ export default function SettingsPage() {
                     value={emailForm.email}
                     onChange={(e) => setEmailForm(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="ton.email@gmail.com"
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
+                    className="w-full px-3 py-2.5 text-sm rounded-lg bg-dark-700 border border-white/10 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">
+                  <label className="flex items-center gap-1 text-xs font-medium text-gray-300 mb-1.5">
                     {language === 'fr' ? 'Mot de passe d\'application' : 'App password'}
                     <a
                       href="https://myaccount.google.com/apppasswords"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-2 text-cyan-400 hover:text-cyan-300"
+                      className="ml-1 text-[10px] text-blue-400 hover:text-blue-300 underline underline-offset-2"
                     >
-                      {language === 'fr' ? '(Générer ici)' : '(Generate here)'}
+                      {language === 'fr' ? 'Générer sur Google' : 'Generate on Google'}
                     </a>
                   </label>
                   <input
@@ -297,41 +327,42 @@ export default function SettingsPage() {
                     value={emailForm.app_password}
                     onChange={(e) => setEmailForm(prev => ({ ...prev, app_password: e.target.value }))}
                     placeholder="xxxx xxxx xxxx xxxx"
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
+                    className="w-full px-3 py-2.5 text-sm rounded-lg bg-dark-700 border border-white/10 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all outline-none"
                   />
                 </div>
 
-                <div className="flex gap-2">
+                {/* IMAP settings - collapsible feel */}
+                <div className="flex gap-2 pt-1">
                   <div className="flex-1">
-                    <label className="block text-xs text-gray-400 mb-1">IMAP Host</label>
+                    <label className="block text-[10px] text-gray-500 mb-1">IMAP Host</label>
                     <input
                       type="text"
                       value={emailForm.imap_host}
                       onChange={(e) => setEmailForm(prev => ({ ...prev, imap_host: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
+                      className="w-full px-3 py-2 text-xs rounded-lg bg-dark-700 border border-white/10 focus:border-blue-500/50 transition-all outline-none text-gray-400"
                     />
                   </div>
-                  <div className="w-24">
-                    <label className="block text-xs text-gray-400 mb-1">Port</label>
+                  <div className="w-20">
+                    <label className="block text-[10px] text-gray-500 mb-1">Port</label>
                     <input
                       type="number"
                       value={emailForm.imap_port}
                       onChange={(e) => setEmailForm(prev => ({ ...prev, imap_port: parseInt(e.target.value) || 993 }))}
-                      className="w-full px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
+                      className="w-full px-3 py-2 text-xs rounded-lg bg-dark-700 border border-white/10 focus:border-blue-500/50 transition-all outline-none text-gray-400"
                     />
                   </div>
                 </div>
 
                 {emailError && (
-                  <div className="flex items-center gap-2 text-red-400 text-xs">
-                    <AlertCircle className="w-3 h-3" />
+                  <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 px-3 py-2 rounded-lg">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     {emailError}
                   </div>
                 )}
 
                 {emailSuccess && (
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs">
-                    <Check className="w-3 h-3" />
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 px-3 py-2 rounded-lg">
+                    <Check className="w-3.5 h-3.5 shrink-0" />
                     {emailSuccess}
                   </div>
                 )}
@@ -339,49 +370,62 @@ export default function SettingsPage() {
                 <button
                   onClick={saveEmailConfig}
                   disabled={emailSaving}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 text-white rounded-lg font-medium text-sm transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-gray-700 disabled:to-gray-700 text-white rounded-xl font-medium text-sm transition-all shadow-lg shadow-blue-500/10"
                 >
                   {emailSaving ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> {language === 'fr' ? 'Connexion...' : 'Connecting...'}</>
                   ) : (
-                    <><Mail className="w-4 h-4" /> {language === 'fr' ? 'Connecter' : 'Connect'}</>
+                    <>
+                      <svg viewBox="0 0 24 24" className="w-4 h-4">
+                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="white"/>
+                      </svg>
+                      {language === 'fr' ? 'Connecter Gmail' : 'Connect Gmail'}
+                    </>
                   )}
                 </button>
               </div>
             )}
 
-            {/* Trigger phrases */}
-            <div className="border-t border-gray-700/50 pt-4 mt-4">
-              <h3 className="text-sm font-semibold text-white mb-3">
-                {language === 'fr' ? 'Phrases déclencheurs' : 'Trigger phrases'}
-              </h3>
-              <p className="text-[10px] md:text-xs text-gray-500 mb-3">
+            {/* Trigger phrases section */}
+            <div className="border-t border-white/5 pt-5 mt-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center">
+                  <span className="text-xs">&#9889;</span>
+                </div>
+                <h3 className="text-sm font-semibold text-white">
+                  {language === 'fr' ? 'Phrases déclencheurs' : 'Trigger phrases'}
+                </h3>
+              </div>
+              <p className="text-[10px] md:text-xs text-gray-500 mb-4 leading-relaxed">
                 {language === 'fr'
-                  ? 'Quand un email contient une de ces phrases, une notification sera créée.'
-                  : 'When an email contains one of these phrases, a notification will be created.'}
+                  ? 'Ajoute des mots-clés ou phrases. Dès qu\'un email les contient, tu recevras une notification.'
+                  : 'Add keywords or phrases. When an email contains them, you\'ll get a notification.'}
               </p>
 
-              {/* Add trigger */}
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  value={newPhrase}
-                  onChange={(e) => setNewPhrase(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addTrigger()}
-                  placeholder={language === 'fr' ? 'Ex: Your item has sold' : 'E.g. Your item has sold'}
-                  className="flex-1 px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
-                />
+              {/* Add trigger form */}
+              <div className="flex gap-2 mb-4">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={newPhrase}
+                    onChange={(e) => setNewPhrase(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addTrigger()}
+                    placeholder={language === 'fr' ? 'Ex: Your item has sold' : 'E.g. Your item has sold'}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg bg-dark-700 border border-white/10 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all outline-none"
+                  />
+                </div>
                 <input
                   type="text"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder={language === 'fr' ? 'Label (optionnel)' : 'Label (optional)'}
-                  className="w-32 md:w-40 px-3 py-2 text-sm rounded-lg bg-dark-700 border border-blue-500/20 focus:border-cyan-400/50"
+                  onKeyDown={(e) => e.key === 'Enter' && addTrigger()}
+                  placeholder={language === 'fr' ? 'Label' : 'Label'}
+                  className="w-24 md:w-32 px-3 py-2.5 text-sm rounded-lg bg-dark-700 border border-white/10 focus:border-amber-500/50 transition-all outline-none"
                 />
                 <button
                   onClick={addTrigger}
                   disabled={triggerSaving || !newPhrase.trim()}
-                  className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-700 text-white rounded-lg transition-colors"
+                  className="px-3 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 disabled:bg-gray-800 disabled:text-gray-600 text-amber-400 rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -389,20 +433,21 @@ export default function SettingsPage() {
 
               {/* Trigger list */}
               {triggers.length > 0 ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {triggers.map(trigger => (
-                    <div key={trigger.id} className="flex items-center justify-between px-3 py-2 bg-dark-700/50 rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm text-white font-medium">{trigger.phrase}</span>
+                    <div key={trigger.id} className="flex items-center justify-between px-3 py-2.5 bg-dark-700/30 border border-white/5 rounded-xl group hover:border-white/10 transition-colors">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-amber-400/60 text-xs">#</span>
+                        <span className="text-sm text-white font-medium truncate">{trigger.phrase}</span>
                         {trigger.label && (
-                          <span className="ml-2 text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full shrink-0">
                             {trigger.label}
                           </span>
                         )}
                       </div>
                       <button
                         onClick={() => removeTrigger(trigger.id)}
-                        className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                        className="p-1.5 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -410,9 +455,15 @@ export default function SettingsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 text-center py-3">
-                  {language === 'fr' ? 'Aucun déclencheur configuré' : 'No triggers configured'}
-                </p>
+                <div className="text-center py-6 border border-dashed border-white/10 rounded-xl">
+                  <Mail className="w-5 h-5 text-gray-600 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500">
+                    {language === 'fr' ? 'Aucun déclencheur configuré' : 'No triggers configured'}
+                  </p>
+                  <p className="text-[10px] text-gray-600 mt-1">
+                    {language === 'fr' ? 'Ajoute une phrase ci-dessus pour commencer' : 'Add a phrase above to get started'}
+                  </p>
+                </div>
               )}
             </div>
           </div>
