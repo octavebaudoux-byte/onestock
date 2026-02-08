@@ -43,24 +43,24 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
   ]
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Compact Sidebar - icons only */}
-      <aside className="hidden md:flex w-16 bg-dark-800 border-r border-blue-500/20 flex-col fixed inset-y-0 left-0 z-30">
-        {/* Logo - icon only */}
-        <div className="p-3 border-b border-blue-500/20 flex items-center justify-center">
+    <div className="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+      {/* Sidebar desktop - fixed, no scroll */}
+      <aside className="hidden md:flex w-[60px] bg-dark-800 border-r border-blue-500/20 flex-col fixed inset-y-0 left-0 z-30">
+        {/* Logo */}
+        <div className="h-12 flex items-center justify-center border-b border-blue-500/20 shrink-0">
           <Logo size="sm" showText={false} />
         </div>
 
-        {/* Navigation - icons only with tooltips */}
-        <nav className="flex-1 px-1.5 py-2 overflow-y-auto scrollbar-hide">
-          <ul className="space-y-1">
+        {/* Nav icons - flex column, equal spacing, no scroll */}
+        <nav className="flex-1 flex flex-col justify-between py-1.5 px-1.5">
+          <ul className="flex flex-col gap-[2px]">
             {navItems.map((item) => {
               const isActive = router.pathname === item.href
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`group relative flex items-center justify-center w-full h-10 rounded-lg transition-all ${
+                    className={`group relative flex items-center justify-center w-full aspect-square rounded-lg transition-all ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : 'text-blue-200/70 hover:text-white hover:bg-dark-600'
@@ -68,7 +68,6 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
                     title={item.label}
                   >
                     <item.icon className="w-[18px] h-[18px]" />
-                    {/* Tooltip */}
                     <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-dark-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
                       {item.label}
                     </span>
@@ -79,11 +78,11 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           </ul>
         </nav>
 
-        {/* Add buttons - icons only */}
-        <div className="px-1.5 py-2 border-t border-blue-500/20 space-y-1">
+        {/* Action buttons */}
+        <div className="px-1.5 py-1.5 border-t border-blue-500/20 flex flex-col gap-[2px] shrink-0">
           <button
             onClick={onAddClick}
-            className="group relative w-full h-10 btn btn-primary flex items-center justify-center rounded-lg"
+            className="group relative w-full aspect-square btn btn-primary flex items-center justify-center rounded-lg"
             title={t('actions.addToStock')}
           >
             <Plus className="w-[18px] h-[18px]" />
@@ -94,7 +93,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onAddSaleClick && (
             <button
               onClick={onAddSaleClick}
-              className="group relative w-full h-10 btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
+              className="group relative w-full aspect-square btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
               title={t('actions.recordSale')}
             >
               <DollarSign className="w-[18px] h-[18px]" />
@@ -106,7 +105,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onExportClick && (
             <button
               onClick={onExportClick}
-              className="group relative w-full h-9 btn btn-secondary flex items-center justify-center rounded-lg"
+              className="group relative w-full aspect-square btn btn-secondary flex items-center justify-center rounded-lg"
               title={t('actions.export')}
             >
               <Download className="w-4 h-4" />
@@ -119,7 +118,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto md:ml-16 pb-16 md:pb-0">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto md:ml-[60px] pb-16 md:pb-0">
         <GlobalSearchHeader />
         <PageTransition>
           {children}
@@ -128,29 +127,28 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
 
       {/* Mobile bottom navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-dark-800/95 backdrop-blur-lg border-t border-blue-500/20 z-30 safe-bottom">
-        <div className="flex items-center justify-around px-1 py-1.5">
+        <div className="flex items-center px-1 py-1.5">
           {navItems.map((item) => {
             const isActive = router.pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-center w-7 h-7 rounded-md transition-all ${
+                className={`flex-1 flex items-center justify-center h-8 rounded-md transition-all ${
                   isActive
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-400 active:scale-95'
                 }`}
               >
-                <item.icon className="w-3.5 h-3.5" />
+                <item.icon className="w-[15px] h-[15px]" />
               </Link>
             )
           })}
-          {/* Add button - always visible */}
           <button
             onClick={onAddClick}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white active:scale-95 transition-transform"
+            className="flex-1 flex items-center justify-center h-8 rounded-md bg-blue-600 text-white active:scale-95 transition-transform mx-0.5"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-[15px] h-[15px]" />
           </button>
         </div>
       </nav>
