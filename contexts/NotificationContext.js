@@ -35,24 +35,7 @@ export function NotificationProvider({ children }) {
     })
   }, [])
 
-  const dismissAll = useCallback(() => {
-    setDismissed(prev => {
-      const updated = { ...prev }
-      notifications.forEach(n => { updated[n.id] = Date.now() })
-      localStorage.setItem('onestock_dismissed_notifs', JSON.stringify(updated))
-      return updated
-    })
-  }, [notifications])
-
-  const togglePanel = useCallback(() => {
-    setPanelOpen(prev => !prev)
-  }, [])
-
-  const closePanel = useCallback(() => {
-    setPanelOpen(false)
-  }, [])
-
-  // Calculer les notifications
+  // Calculer les notifications (doit être avant dismissAll qui en dépend)
   const notifications = useMemo(() => {
     const notifs = []
     const now = new Date()
@@ -119,6 +102,23 @@ export function NotificationProvider({ children }) {
 
     return notifs
   }, [sneakers, dismissed, language])
+
+  const dismissAll = useCallback(() => {
+    setDismissed(prev => {
+      const updated = { ...prev }
+      notifications.forEach(n => { updated[n.id] = Date.now() })
+      localStorage.setItem('onestock_dismissed_notifs', JSON.stringify(updated))
+      return updated
+    })
+  }, [notifications])
+
+  const togglePanel = useCallback(() => {
+    setPanelOpen(prev => !prev)
+  }, [])
+
+  const closePanel = useCallback(() => {
+    setPanelOpen(false)
+  }, [])
 
   // Historique : notifications déjà lues (les plus récentes en premier, max 20)
   const history = useMemo(() => {
