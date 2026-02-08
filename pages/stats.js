@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Head from 'next/head'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
@@ -8,6 +8,7 @@ import {
 import Layout from '../components/Layout'
 import { formatPrice, calculateStats } from '../lib/store'
 import { useData } from '../hooks/useData'
+import { useNotifications } from '../contexts/NotificationContext'
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
@@ -15,7 +16,10 @@ const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Se
 
 export default function Stats() {
   const { sneakers, loading } = useData()
+  const { updateSneakers } = useNotifications()
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+
+  useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
   const stats = calculateStats(sneakers)
 

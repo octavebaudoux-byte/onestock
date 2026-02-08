@@ -9,14 +9,18 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useNotifications } from '../contexts/NotificationContext'
 
 export default function Inventory() {
   const { sneakers, loading, save, update, remove } = useData()
   const { t } = useLanguage()
+  const { updateSneakers } = useNotifications()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+
+  useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
   // Vue grille/liste
   const [viewMode, setViewMode] = useState('grid')

@@ -10,12 +10,15 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useNotifications } from '../contexts/NotificationContext'
 
 export default function Sales() {
   const { sneakers, loading, save, update, remove } = useData()
   const { t } = useLanguage()
+  const { updateSneakers } = useNotifications()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
+  useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
   const [timeRange, setTimeRange] = useState('all')
   const [modalMode, setModalMode] = useState('sale')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })

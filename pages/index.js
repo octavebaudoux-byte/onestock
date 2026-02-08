@@ -10,16 +10,20 @@ import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useExpenses } from '../hooks/useExpenses'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useNotifications } from '../contexts/NotificationContext'
 
 export default function Dashboard() {
   const { sneakers, loading, save, update, remove } = useData()
   const { expenses } = useExpenses()
   const { t, language } = useLanguage()
+  const { updateSneakers } = useNotifications()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
   const [animatedStats, setAnimatedStats] = useState({ profit: 0, stock: 0, sold: 0, value: 0 })
+
+  useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
   const stats = calculateStats(sneakers)
 
