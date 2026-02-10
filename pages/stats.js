@@ -8,16 +8,20 @@ import {
 import Layout from '../components/Layout'
 import { formatPrice, calculateStats } from '../lib/store'
 import { useData } from '../hooks/useData'
+import { useLanguage } from '../contexts/LanguageContext'
 import { useNotifications } from '../contexts/NotificationContext'
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
-const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default function Stats() {
   const { sneakers, loading } = useData()
+  const { t, language } = useLanguage()
   const { updateSneakers } = useNotifications()
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const MONTHS = language === 'fr' ? MONTHS_FR : MONTHS_EN
 
   useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
@@ -82,20 +86,20 @@ export default function Stats() {
     })
 
     return Object.values(months)
-  }, [sneakers, selectedYear])
+  }, [sneakers, selectedYear, MONTHS])
 
   // Données pour le pie chart des plateformes
   const platformChartData = useMemo(() => {
     const platforms = {}
     sneakers.filter(s => s.status === 'sold').forEach(s => {
-      const platform = s.sellPlatform || 'Non spécifié'
+      const platform = s.sellPlatform || t('stats.notSpecified')
       if (!platforms[platform]) platforms[platform] = 0
       platforms[platform]++
     })
     return Object.entries(platforms)
       .map(([platform, count]) => ({ name: platform, value: count }))
       .sort((a, b) => b.value - a.value)
-  }, [sneakers])
+  }, [sneakers, language])
 
   // Top performers
   const topPerformers = useMemo(() => {
@@ -123,7 +127,7 @@ export default function Stats() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Chargement...</div>
+        <div className="text-gray-400">{t('common.loading')}</div>
       </div>
     )
   }
@@ -135,7 +139,7 @@ export default function Stats() {
           <p className="text-white font-medium">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {entry.name.includes('profit') || entry.name.includes('ventes') || entry.name.includes('achats')
+              {entry.name}: {['profit', 'ventes', 'achats'].includes(entry.dataKey)
                 ? formatPrice(entry.value)
                 : entry.value}
             </p>
@@ -149,23 +153,23 @@ export default function Stats() {
   return (
     <>
       <Head>
-        <title>Statistiques - OneStock</title>
+        <title>{t('stats.title')} - OneStock</title>
       </Head>
 
       <Layout>
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Statistiques</h1>
-            <p className="text-gray-400">Analyse détaillée de tes performances</p>
+            <h1 className="text-3xl font-bold mb-2">{t('stats.title')}</h1>
+            <p className="text-gray-400">{t('stats.subtitle')}</p>
           </div>
 
           {sneakers.length === 0 ? (
             <div className="card text-center py-16">
               <div className="text-5xl mb-4">📊</div>
-              <p className="text-gray-400 mb-2">Pas encore de données</p>
+              <p className="text-gray-400 mb-2">{t('stats.noData')}</p>
               <p className="text-sm text-gray-500">
-                Ajoute des paires pour voir tes statistiques
+                {t('stats.addPairs')}
               </p>
             </div>
           ) : (
@@ -175,12 +179,12 @@ export default function Stats() {
                 <div className="card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm mb-1">Durée moyenne en stock</p>
+                      <p className="text-gray-400 text-sm mb-1">{t('stats.avgDuration')}</p>
                       <p className="text-3xl font-bold text-blue-400">
-                        {stats.avgStockDuration > 0 ? `${Math.round(stats.avgStockDuration)} jours` : 'N/A'}
+                        {stats.avgStockDuration > 0 ? `${Math.round(stats.avgStockDuration)} ${t('stats.days')}` : 'N/A'}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Temps moyen entre achat et vente
+                        {t('stats.avgDurationSub')}
                       </p>
                     </div>
                     <div className="text-5xl">⏱️</div>
@@ -190,12 +194,12 @@ export default function Stats() {
                 <div className="card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm mb-1">Rotation (30 derniers jours)</p>
+                      <p className="text-gray-400 text-sm mb-1">{t('stats.rotation')}</p>
                       <p className="text-3xl font-bold text-emerald-400">
-                        {stats.salesRotation} {stats.salesRotation > 1 ? 'ventes' : 'vente'}
+                        {stats.salesRotation} {stats.salesRotation > 1 ? t('sales.salesPlural') : t('sales.sale')}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Nombre de paires vendues ce mois
+                        {t('stats.rotationSub')}
                       </p>
                     </div>
                     <div className="text-5xl">🔄</div>
@@ -208,7 +212,7 @@ export default function Stats() {
                 {/* Achats en volumes (barres) */}
                 <div className="card">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold">Achats mensuels</h2>
+                    <h2 className="text-xl font-semibold">{t('stats.monthlyPurchases')}</h2>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handlePrevYear}
@@ -240,7 +244,7 @@ export default function Stats() {
                         <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
-                        <Bar dataKey="achats" name="Achats" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="achats" name={t('stats.purchases')} fill="#3b82f6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -248,7 +252,7 @@ export default function Stats() {
 
                 {/* Ventes et Profit en courbes */}
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">Vente</h2>
+                  <h2 className="text-xl font-semibold mb-4">{t('stats.salesChart')}</h2>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={monthlyChartData}>
@@ -257,8 +261,8 @@ export default function Stats() {
                         <YAxis stroke="#888" tickFormatter={(v) => `${v}€`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="ventes" name="Ventes" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 5 }} activeDot={{ r: 7 }} />
-                        <Line type="monotone" dataKey="profit" name="Profit" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 5 }} activeDot={{ r: 7 }} />
+                        <Line type="monotone" dataKey="ventes" name={t('stats.salesLabel')} stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 5 }} activeDot={{ r: 7 }} />
+                        <Line type="monotone" dataKey="profit" name={t('stats.profit')} stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 5 }} activeDot={{ r: 7 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -269,7 +273,7 @@ export default function Stats() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Brand chart */}
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">Par marque</h2>
+                  <h2 className="text-xl font-semibold mb-4">{t('stats.byBrand')}</h2>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={brandChartData} layout="vertical">
@@ -277,7 +281,7 @@ export default function Stats() {
                         <XAxis type="number" stroke="#888" />
                         <YAxis dataKey="name" type="category" stroke="#888" width={80} />
                         <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="paires" name="Paires" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="paires" name={t('stats.pairs')} fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -285,7 +289,7 @@ export default function Stats() {
 
                 {/* Platform pie chart */}
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">Plateformes de vente</h2>
+                  <h2 className="text-xl font-semibold mb-4">{t('stats.platforms')}</h2>
                   {platformChartData.length > 0 ? (
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
@@ -311,7 +315,7 @@ export default function Stats() {
                     </div>
                   ) : (
                     <div className="h-64 flex items-center justify-center text-gray-500">
-                      Aucune vente enregistrée
+                      {t('stats.noSalesRecorded')}
                     </div>
                   )}
                 </div>
@@ -320,7 +324,7 @@ export default function Stats() {
               {/* Top performers */}
               {topPerformers.length > 0 && (
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">🏆 Top 5 meilleures ventes</h2>
+                  <h2 className="text-xl font-semibold mb-4">🏆 {t('stats.top5')}</h2>
                   <div className="space-y-3">
                     {topPerformers.map((sneaker, index) => (
                       <div key={sneaker.id} className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
@@ -331,7 +335,7 @@ export default function Stats() {
                           <div>
                             <div className="font-medium">{sneaker.name}</div>
                             <div className="text-sm text-gray-400">
-                              {sneaker.brand} • Taille {sneaker.size}
+                              {sneaker.brand} • {t('stats.size')} {sneaker.size}
                             </div>
                           </div>
                         </div>

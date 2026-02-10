@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
-export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick }) {
+export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick, onScanClick }) {
   const router = useRouter()
   const { t, language } = useLanguage()
 
@@ -119,7 +119,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
 
       {/* Main content */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto md:ml-[60px] pb-16 md:pb-0">
-        <GlobalSearchHeader />
+        <GlobalSearchHeader onScanClick={onScanClick} />
         <PageTransition>
           {children}
         </PageTransition>

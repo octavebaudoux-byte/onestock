@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
 import SneakerRow from '../components/SneakerRow'
+import BarcodeScanner from '../components/BarcodeScanner'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { formatPrice, exportToCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
@@ -19,6 +20,7 @@ export default function Inventory() {
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [modalMode, setModalMode] = useState('add')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
 
   useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
@@ -153,6 +155,19 @@ export default function Inventory() {
     exportToCSV(sneakers, 'stock')
   }
 
+  const openScanner = () => setIsScannerOpen(true)
+
+  const handleScanResult = (result) => {
+    setIsScannerOpen(false)
+    if (result) {
+      setEditingSneaker({ name: result.name, brand: result.brand, sku: result.sku, imageUrl: result.imageUrl })
+      setModalMode('add')
+      setIsModalOpen(true)
+    } else {
+      openAddModal()
+    }
+  }
+
   // Marques présentes dans le stock
   const brandsInStock = [...new Set(sneakers.map(s => s.brand))].sort()
 
@@ -181,7 +196,7 @@ export default function Inventory() {
         <title>{t('inventory.title')} - OneStock</title>
       </Head>
 
-      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport}>
+      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport} onScanClick={openScanner}>
         <div className="p-4 md:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-4 md:mb-8">
@@ -348,6 +363,12 @@ export default function Inventory() {
         confirmText="Supprimer"
         cancelText="Annuler"
         isDangerous={true}
+      />
+
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onSelectResult={handleScanResult}
       />
     </>
   )
