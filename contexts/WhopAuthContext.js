@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 
 const WhopAuthContext = createContext({})
@@ -6,52 +6,83 @@ const WhopAuthContext = createContext({})
 // Public routes that don't require authentication
 const publicRoutes = ['/login']
 
+function parseCookieUser() {
+  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+    const trimmed = cookie.trim()
+    const eqIndex = trimmed.indexOf('=')
+    if (eqIndex > 0) {
+      const key = trimmed.substring(0, eqIndex)
+      const value = trimmed.substring(eqIndex + 1)
+      acc[key] = value
+    }
+    return acc
+  }, {})
+
+  if (cookies.whop_user) {
+    try {
+      return JSON.parse(decodeURIComponent(cookies.whop_user))
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
 export function WhopAuthProvider({ children }) {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    checkAuth()
+  const checkAuth = useCallback(() => {
+    const userData = parseCookieUser()
+    setUser(userData)
+    setLoading(false)
   }, [])
 
-  const checkAuth = () => {
-    // Parse cookies - handle values that contain '='
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const trimmed = cookie.trim()
-      const eqIndex = trimmed.indexOf('=')
-      if (eqIndex > 0) {
-        const key = trimmed.substring(0, eqIndex)
-        const value = trimmed.substring(eqIndex + 1)
-        acc[key] = value
-      }
-      return acc
-    }, {})
+  // Check auth on mount
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
-    if (cookies.whop_user) {
-      try {
-        const userData = JSON.parse(decodeURIComponent(cookies.whop_user))
-        console.log('[Auth] User data from cookie:', userData)
-        setUser(userData)
-      } catch (e) {
-        console.error('Failed to parse whop_user cookie:', e, cookies.whop_user)
-        setUser(null)
-      }
-    } else {
-      console.log('[Auth] No whop_user cookie found')
-      setUser(null)
+  // Re-check auth when route changes (catches redirect from callback)
+  useEffect(() => {
+    if (router.isReady) {
+      checkAuth()
     }
+  }, [router.asPath, router.isReady, checkAuth])
 
-    setLoading(false)
-  }
+  // If user is still null after mount, retry a few times (cookie sync delay)
+  useEffect(() => {
+    if (!loading && !user && !publicRoutes.includes(router.pathname)) {
+      let retries = 0
+      const interval = setInterval(() => {
+        const userData = parseCookieUser()
+        if (userData) {
+          setUser(userData)
+          clearInterval(interval)
+        } else if (++retries >= 5) {
+          clearInterval(interval)
+        }
+      }, 200)
+      return () => clearInterval(interval)
+    }
+  }, [loading, user, router.pathname])
 
   useEffect(() => {
-    // Redirect logic - only run once when loading is done
     if (!loading && router.isReady) {
       const isPublicRoute = publicRoutes.includes(router.pathname)
 
       if (!user && !isPublicRoute) {
-        router.replace('/login')
+        // Small delay before redirect to give cookie one last chance
+        const timeout = setTimeout(() => {
+          const lastCheck = parseCookieUser()
+          if (lastCheck) {
+            setUser(lastCheck)
+          } else {
+            router.replace('/login')
+          }
+        }, 300)
+        return () => clearTimeout(timeout)
       } else if (user && router.pathname === '/login') {
         router.replace('/')
       }
@@ -62,7 +93,6 @@ export function WhopAuthProvider({ children }) {
     window.location.href = '/api/auth/logout'
   }
 
-  // Show loading while checking auth
   if (loading) {
     return (
       <WhopAuthContext.Provider value={{ user, loading, logout, isAuthenticated: !!user }}>

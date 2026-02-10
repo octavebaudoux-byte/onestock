@@ -51,23 +51,23 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           <Logo size="sm" showText={false} />
         </div>
 
-        {/* Nav icons - flex column, equal spacing, no scroll */}
-        <nav className="flex-1 flex flex-col justify-between py-1.5 px-1.5">
-          <ul className="flex flex-col gap-[2px]">
+        {/* Nav icons - fill height evenly */}
+        <nav className="flex-1 flex flex-col px-1.5 py-1">
+          <ul className="flex-1 flex flex-col">
             {navItems.map((item) => {
               const isActive = router.pathname === item.href
               return (
-                <li key={item.href}>
+                <li key={item.href} className="flex-1 flex items-center">
                   <Link
                     href={item.href}
-                    className={`group relative flex items-center justify-center w-full aspect-square rounded-lg transition-all ${
+                    className={`group relative flex items-center justify-center w-full h-full max-h-[44px] rounded-lg transition-all ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : 'text-blue-200/70 hover:text-white hover:bg-dark-600'
                     }`}
                     title={item.label}
                   >
-                    <item.icon className="w-[18px] h-[18px]" />
+                    <item.icon className="w-[19px] h-[19px]" />
                     <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-dark-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
                       {item.label}
                     </span>
@@ -79,10 +79,10 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
         </nav>
 
         {/* Action buttons */}
-        <div className="px-1.5 py-1.5 border-t border-blue-500/20 flex flex-col gap-[2px] shrink-0">
+        <div className="px-1.5 py-1.5 border-t border-blue-500/20 flex flex-col gap-1 shrink-0">
           <button
             onClick={onAddClick}
-            className="group relative w-full aspect-square btn btn-primary flex items-center justify-center rounded-lg"
+            className="group relative w-full h-10 btn btn-primary flex items-center justify-center rounded-lg"
             title={t('actions.addToStock')}
           >
             <Plus className="w-[18px] h-[18px]" />
@@ -93,7 +93,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onAddSaleClick && (
             <button
               onClick={onAddSaleClick}
-              className="group relative w-full aspect-square btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
+              className="group relative w-full h-10 btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
               title={t('actions.recordSale')}
             >
               <DollarSign className="w-[18px] h-[18px]" />
@@ -105,7 +105,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           {onExportClick && (
             <button
               onClick={onExportClick}
-              className="group relative w-full aspect-square btn btn-secondary flex items-center justify-center rounded-lg"
+              className="group relative w-full h-10 btn btn-secondary flex items-center justify-center rounded-lg"
               title={t('actions.export')}
             >
               <Download className="w-4 h-4" />
