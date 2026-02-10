@@ -70,13 +70,13 @@ export default function GlobalSearchHeader({ onScanClick }) {
             </div>
           </form>
 
-          {/* Scan Button - mobile only */}
+          {/* Scan Button */}
           {onScanClick && (
             <button
               onClick={onScanClick}
-              className="md:hidden relative p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0"
+              className="relative p-1.5 md:p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0"
             >
-              <ScanBarcode className="w-4 h-4" />
+              <ScanBarcode className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           )}
 
