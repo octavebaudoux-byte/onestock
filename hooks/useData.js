@@ -48,12 +48,13 @@ export function useData() {
 
   const remove = useCallback(async (sneakerId) => {
     if (!userId) return false
-    const success = await deleteSneaker(userId, sneakerId)
-    if (success) {
-      setSneakers(prev => prev.filter(s => s.id !== sneakerId))
-    }
-    return success
-  }, [userId])
+    const backup = sneakers.find(s => s.id === sneakerId)
+    setSneakers(prev => prev.filter(s => s.id !== sneakerId))
+    deleteSneaker(userId, sneakerId).catch(() => {
+      if (backup) setSneakers(prev => [...prev, backup])
+    })
+    return true
+  }, [userId, sneakers])
 
   const save = useCallback(async (sneaker) => {
     const existing = sneakers.find(s => s.id === sneaker.id)
