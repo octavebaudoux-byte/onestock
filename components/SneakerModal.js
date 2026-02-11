@@ -203,40 +203,41 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
       fullFormData: formData
     })
 
-    const data = {
+    const qty = parseInt(formData.quantity) || 1
+
+    const baseData = {
       ...formData,
-      id: sneaker?.id || generateId(),
       buyPrice: parseFloat(formData.buyPrice) || 0,
       sellPrice: formData.sellPrice ? parseFloat(formData.sellPrice) : null,
       fees: formData.fees ? parseFloat(formData.fees) : 0,
       targetSellPrice: formData.targetSellPrice ? parseFloat(formData.targetSellPrice) : null,
-      quantity: parseInt(formData.quantity) || 1,
-      createdAt: sneaker?.createdAt || new Date().toISOString(),
+      quantity: 1,
       updatedAt: new Date().toISOString(),
     }
 
-    console.log('💾 Data object being saved:', {
-      listedOnPlatforms: data.listedOnPlatforms,
-      fullData: data
-    })
+    // Si mode ajout et quantité > 1, créer N enregistrements séparés
+    if (mode === 'add' && qty > 1) {
+      for (let i = 0; i < qty; i++) {
+        onSave({
+          ...baseData,
+          id: generateId(),
+          createdAt: new Date().toISOString(),
+        })
+      }
+    } else {
+      onSave({
+        ...baseData,
+        id: sneaker?.id || generateId(),
+        quantity: mode === 'edit' ? qty : 1,
+        createdAt: sneaker?.createdAt || new Date().toISOString(),
+      })
+    }
 
     // Détecter si c'est une vente et s'il y avait des plateformes listées
     const wasListed = sneaker?.listedOnPlatforms && sneaker.listedOnPlatforms.length > 0
-    const isBeingSold = data.status === 'sold'
-    const soldPlatform = data.sellPlatform
+    const isBeingSold = baseData.status === 'sold'
+    const soldPlatform = baseData.sellPlatform
 
-    console.log('🔍 Toast Debug:', {
-      wasListed,
-      isBeingSold,
-      soldPlatform,
-      originalPlatforms: sneaker?.listedOnPlatforms,
-      sneakerStatus: sneaker?.status,
-      newStatus: data.status,
-      mode
-    })
-
-    // Sauvegarder d'abord
-    onSave(data)
     onClose()
 
     // Afficher le toast APRÈS la fermeture de la modal
@@ -256,8 +257,8 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
               // Stocker un rappel dans localStorage
               const reminders = JSON.parse(localStorage.getItem('platform_reminders') || '[]')
               reminders.push({
-                sneakerId: data.id,
-                sneakerName: data.name,
+                sneakerId: sneaker?.id,
+                sneakerName: baseData.name,
                 platforms: platformsToRemove,
                 timestamp: new Date().toISOString()
               })
