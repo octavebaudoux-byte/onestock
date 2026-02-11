@@ -1,6 +1,6 @@
 import '../styles/globals.css'
 import { useEffect } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { WhopAuthProvider } from '../contexts/WhopAuthContext'
 import { ThemeProvider } from '../contexts/ThemeContext'
@@ -41,7 +41,15 @@ export default function App({ Component, pageProps }) {
           <WhopAuthProvider>
             <NotificationProvider>
               <AnimatePresence mode="wait" initial={false}>
-                <Component {...pageProps} key={router.route} />
+                <motion.div
+                  key={router.route}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                >
+                  <Component {...pageProps} />
+                </motion.div>
               </AnimatePresence>
             </NotificationProvider>
           </WhopAuthProvider>
