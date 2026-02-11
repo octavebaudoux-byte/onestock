@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   Plus,
   DollarSign,
-  Download,
   Settings,
   CreditCard,
   Search,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
-export default function Layout({ children, onAddClick, onAddSaleClick, onExportClick, onScanClick }) {
+export default function Layout({ children, onAddClick, onAddSaleClick, onScanClick }) {
   const router = useRouter()
   const { t, language } = useLanguage()
 
@@ -78,10 +77,10 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
           </ul>
         </nav>
 
-        {/* Action buttons */}
+        {/* Action buttons - always show + and $ */}
         <div className="px-1.5 py-1.5 border-t border-blue-500/20 flex flex-col gap-1 shrink-0">
           <button
-            onClick={onAddClick}
+            onClick={onAddClick || (() => router.push('/inventory'))}
             className="group relative w-full h-10 btn btn-primary flex items-center justify-center rounded-lg"
             title={t('actions.addToStock')}
           >
@@ -90,30 +89,16 @@ export default function Layout({ children, onAddClick, onAddSaleClick, onExportC
               {t('actions.addToStock')}
             </span>
           </button>
-          {onAddSaleClick && (
-            <button
-              onClick={onAddSaleClick}
-              className="group relative w-full h-10 btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
-              title={t('actions.recordSale')}
-            >
-              <DollarSign className="w-[18px] h-[18px]" />
-              <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-dark-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
-                {t('actions.recordSale')}
-              </span>
-            </button>
-          )}
-          {onExportClick && (
-            <button
-              onClick={onExportClick}
-              className="group relative w-full h-10 btn btn-secondary flex items-center justify-center rounded-lg"
-              title={t('actions.export')}
-            >
-              <Download className="w-4 h-4" />
-              <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-dark-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
-                {t('actions.export')}
-              </span>
-            </button>
-          )}
+          <button
+            onClick={onAddSaleClick || (() => router.push('/sales'))}
+            className="group relative w-full h-10 btn flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white"
+            title={t('actions.recordSale')}
+          >
+            <DollarSign className="w-[18px] h-[18px]" />
+            <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-dark-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-blue-500/20">
+              {t('actions.recordSale')}
+            </span>
+          </button>
         </div>
       </aside>
 

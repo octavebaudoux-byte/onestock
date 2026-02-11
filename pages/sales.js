@@ -164,7 +164,7 @@ export default function Sales() {
         <title>{t('sales.title')} - OneStock</title>
       </Head>
 
-      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport}>
+      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal}>
         <div className="p-4 md:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-4 md:mb-8">

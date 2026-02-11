@@ -196,7 +196,7 @@ export default function Inventory() {
         <title>{t('inventory.title')} - OneStock</title>
       </Head>
 
-      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onExportClick={handleExport} onScanClick={openScanner}>
+      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onScanClick={openScanner}>
         <div className="p-4 md:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-4 md:mb-8">
