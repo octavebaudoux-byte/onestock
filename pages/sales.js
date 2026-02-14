@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent, LayoutGrid, List } from 'lucide-react'
+import { TrendingUp, DollarSign, ShoppingBag, Zap, ArrowUpRight, Percent, LayoutGrid, List, FileSpreadsheet } from 'lucide-react'
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SaleCard from '../components/SaleCard'
 import SneakerRow from '../components/SneakerRow'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { formatPrice, exportToCSV } from '../lib/store'
+import { formatPrice, exportToCSV, exportAccountingCSV } from '../lib/store'
 import { useData } from '../hooks/useData'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useNotifications } from '../contexts/NotificationContext'
@@ -150,6 +150,10 @@ export default function Sales() {
     exportToCSV(sneakers, 'sold')
   }
 
+  const handleAccountingExport = () => {
+    exportAccountingCSV(sneakers)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -173,17 +177,31 @@ export default function Sales() {
               <p className="text-xs md:text-base text-gray-400">{t('sales.subtitle')}</p>
             </div>
 
-            {/* Time range filter */}
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="min-w-[100px] md:min-w-[160px] text-sm md:text-base"
-            >
-              <option value="all">{t('sales.allSales')}</option>
-              <option value="week">{t('sales.thisWeek')}</option>
-              <option value="month">{t('sales.thisMonth')}</option>
-              <option value="year">{t('sales.thisYear')}</option>
-            </select>
+            <div className="flex items-center gap-2">
+              {/* Export button */}
+              {sales.length > 0 && (
+                <button
+                  onClick={handleAccountingExport}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors text-sm font-medium"
+                  title="Exporter en CSV comptable"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span className="hidden md:inline">Export CSV</span>
+                </button>
+              )}
+
+              {/* Time range filter */}
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="min-w-[100px] md:min-w-[160px] text-sm md:text-base"
+              >
+                <option value="all">{t('sales.allSales')}</option>
+                <option value="week">{t('sales.thisWeek')}</option>
+                <option value="month">{t('sales.thisMonth')}</option>
+                <option value="year">{t('sales.thisYear')}</option>
+              </select>
+            </div>
           </div>
 
           {/* Stats Cards avec style amélioré - 2 colonnes sur mobile */}
