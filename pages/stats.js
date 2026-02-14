@@ -41,7 +41,7 @@ export default function Stats() {
     return Array.from(years).sort((a, b) => b - a)
   }, [sneakers])
 
-  // Données pour le graphique par marque
+  // Données pour le graphique par marque (par nombre de paires)
   const brandChartData = useMemo(() => {
     return Object.entries(stats.brandStats)
       .map(([brand, data]) => ({
@@ -53,6 +53,18 @@ export default function Stats() {
       .slice(0, 8)
   }, [stats.brandStats])
 
+  // Données pour les marques les plus rentables (par profit)
+  const profitableBrandsData = useMemo(() => {
+    return Object.entries(stats.brandStats)
+      .map(([brand, data]) => ({
+        name: brand,
+        paires: data.count,
+        profit: data.profit,
+      }))
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, 8)
+  }, [stats.brandStats])
+
   // Données pour le graphique mensuel (12 mois de l'année sélectionnée)
   const monthlyChartData = useMemo(() => {
     const months = {}
@@ -60,7 +72,7 @@ export default function Stats() {
     // Créer les 12 mois de l'année sélectionnée
     for (let i = 0; i < 12; i++) {
       const key = MONTHS[i]
-      months[key] = { name: key, ventes: 0, profit: 0, achats: 0 }
+      months[key] = { name: key, ventes: 0, profit: 0, achats: 0, salesCount: 0 }
     }
 
     // Remplir avec les données
@@ -81,6 +93,7 @@ export default function Stats() {
           const sellKey = MONTHS[sellDate.getMonth()]
           months[sellKey].ventes += s.sellPrice || 0
           months[sellKey].profit += (s.sellPrice || 0) - s.buyPrice - (s.fees || 0)
+          months[sellKey].salesCount += 1 // Nombre de ventes
         }
       }
     })
@@ -318,6 +331,56 @@ export default function Stats() {
                       {t('stats.noSalesRecorded')}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* New Stats Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Nombre de ventes par mois */}
+                <div className="card">
+                  <h2 className="text-xl font-semibold mb-4">
+                    {language === 'fr' ? 'Nombre de ventes par mois' : 'Sales count per month'}
+                  </h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis dataKey="name" stroke="#888" />
+                        <YAxis stroke="#888" />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Bar
+                          dataKey="salesCount"
+                          name={language === 'fr' ? 'Ventes' : 'Sales'}
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Top marques les plus rentables */}
+                <div className="card">
+                  <h2 className="text-xl font-semibold mb-4">
+                    {language === 'fr' ? 'Top marques les plus rentables' : 'Most profitable brands'}
+                  </h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={profitableBrandsData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis type="number" stroke="#888" tickFormatter={(v) => `${v}€`} />
+                        <YAxis dataKey="name" type="category" stroke="#888" width={80} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar
+                          dataKey="profit"
+                          name={t('stats.profit')}
+                          fill="#f59e0b"
+                          radius={[0, 4, 4, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
 
