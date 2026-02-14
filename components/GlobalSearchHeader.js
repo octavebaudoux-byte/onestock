@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
-import { Search, X, Bell, ScanBarcode } from 'lucide-react'
+import { Search, X, Bell } from 'lucide-react'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useNotifications } from '../contexts/NotificationContext'
 import NotificationPanel from './NotificationPanel'
 
-export default function GlobalSearchHeader({ onScanClick }) {
+export default function GlobalSearchHeader() {
   const router = useRouter()
   const { user } = useWhopAuth()
   const { language } = useLanguage()
@@ -69,16 +69,6 @@ export default function GlobalSearchHeader({ onScanClick }) {
               )}
             </div>
           </form>
-
-          {/* Scan Button */}
-          {onScanClick && (
-            <button
-              onClick={onScanClick}
-              className="relative p-1.5 md:p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all shrink-0"
-            >
-              <ScanBarcode className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-          )}
 
           {/* Notification Bell */}
           <div className="relative shrink-0">

@@ -5,7 +5,6 @@ import { Package, TrendingUp, Zap, Target, Flame, ArrowUpRight, Percent, Sparkle
 import Layout from '../components/Layout'
 import SneakerModal from '../components/SneakerModal'
 import SneakerCard from '../components/SneakerCard'
-import BarcodeScanner from '../components/BarcodeScanner'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { calculateStats, formatPrice } from '../lib/store'
 import { useData } from '../hooks/useData'
@@ -23,8 +22,6 @@ export default function Dashboard() {
   const [modalMode, setModalMode] = useState('add')
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null })
   const [animatedStats, setAnimatedStats] = useState({ profit: 0, stock: 0, sold: 0, value: 0 })
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
-  const [scanPrefill, setScanPrefill] = useState(null)
 
   useEffect(() => { updateSneakers(sneakers) }, [sneakers, updateSneakers])
 
@@ -105,20 +102,6 @@ export default function Dashboard() {
     setIsModalOpen(true)
   }
 
-  const openScanner = () => setIsScannerOpen(true)
-
-  const handleScanResult = (result) => {
-    setIsScannerOpen(false)
-    if (result) {
-      setScanPrefill(result)
-      setEditingSneaker({ name: result.name, brand: result.brand, sku: result.sku, imageUrl: result.imageUrl })
-      setModalMode('add')
-      setIsModalOpen(true)
-    } else {
-      openAddModal()
-    }
-  }
-
   // Expand sneakers by quantity (duplicate cards)
   const expandedSneakers = sneakers.flatMap(sneaker => {
     const qty = sneaker.quantity || 1
@@ -160,7 +143,7 @@ export default function Dashboard() {
         <meta name="description" content="Sneaker inventory management" />
       </Head>
 
-      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal} onScanClick={openScanner}>
+      <Layout onAddClick={openAddModal} onAddSaleClick={openSaleModal}>
         <div className="p-4 md:p-8 space-y-4 md:space-y-8">
           {/* Header avec effet gradient - Compact sur mobile */}
           <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-blue-600/20 border border-blue-500/30 p-4 md:p-8">
@@ -419,12 +402,6 @@ export default function Dashboard() {
         confirmText="Supprimer"
         cancelText="Annuler"
         isDangerous={true}
-      />
-
-      <BarcodeScanner
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onSelectResult={handleScanResult}
       />
     </>
   )
