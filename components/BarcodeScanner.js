@@ -33,11 +33,14 @@ export default function BarcodeScanner({ isOpen, onClose, onSelectResult }) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/sneakers/search?query=${encodeURIComponent(code)}&limit=10`)
+      // Utiliser l'API Retailed.io pour chercher par code-barres
+      const response = await fetch(`/api/sneakers/barcode?barcode=${encodeURIComponent(code)}`)
       const data = await response.json()
 
       if (response.ok && data.results?.length > 0) {
         setSearchResults(data.results)
+      } else if (response.status === 500 && data.message?.includes('API key')) {
+        setError(language === 'fr' ? 'Clé API manquante. Consultez la console.' : 'API key missing. Check console.')
       } else {
         setSearchResults([])
         setError(language === 'fr' ? 'Aucun resultat pour ce code-barres' : 'No results for this barcode')
