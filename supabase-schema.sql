@@ -54,3 +54,19 @@ ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 -- Politique pour sneakers: tout le monde peut tout faire (simplifié car on filtre par user_id côté client)
 CREATE POLICY "Allow all for sneakers" ON sneakers FOR ALL USING (true);
 CREATE POLICY "Allow all for expenses" ON expenses FOR ALL USING (true);
+
+-- Storage bucket pour les images de sneakers
+-- A exécuter dans le SQL Editor de Supabase
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('sneaker-images', 'sneaker-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Politique : tout le monde peut lire (public)
+CREATE POLICY "Public read sneaker-images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'sneaker-images');
+
+-- Politique : les utilisateurs authentifiés peuvent uploader
+CREATE POLICY "Auth upload sneaker-images"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'sneaker-images');

@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Search, FileText, Loader2, Receipt } from 'lucide-react'
+import { X, Search, FileText, Loader2, Receipt, Upload, Link } from 'lucide-react'
 import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 import { getCachedResults, setCachedResults } from '../lib/searchCache'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
+import { uploadSneakerImage } from '../lib/supabase'
 
 export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 'add' }) {
   const { showToast } = useToast()
+  const { user } = useAuth()
   // mode peut être: 'add' (inventaire), 'sale' (vente directe), 'edit'
   const [formData, setFormData] = useState({
     name: '',
@@ -43,6 +46,30 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const [isSearching, setIsSearching] = useState(false)
   const [apiError, setApiError] = useState(null)
   const latestQueryRef = useRef('')
+
+  // Image upload state
+  const [imageMode, setImageMode] = useState('upload')
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingImage(true)
+    const userId = user?.id || 'anonymous'
+    const { url, error } = await uploadSneakerImage(file, userId)
+
+    if (error) {
+      showToast(error, 'error')
+    } else {
+      setFormData(prev => ({ ...prev, imageUrl: url }))
+      showToast('Image uploadée avec succès', 'success')
+    }
+    setIsUploadingImage(false)
+    // Reset input so same file can be re-selected
+    e.target.value = ''
+  }
 
   useEffect(() => {
     if (sneaker) {
@@ -419,18 +446,65 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
             </div>
           )}
 
-          {/* Image URL manual */}
+          {/* Image : Upload ou URL */}
           {!formData.imageUrl && (
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Image URL (optionnel)</label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                placeholder="https://..."
-                className="w-full"
-              />
+              <label className="block text-sm text-gray-400 mb-2">Image (optionnel)</label>
+              {/* Onglets */}
+              <div className="flex gap-1 mb-3 bg-dark-700 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setImageMode('upload')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm rounded-md transition-colors ${imageMode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Uploader
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode('url')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm rounded-md transition-colors ${imageMode === 'url' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  <Link className="w-3.5 h-3.5" />
+                  URL
+                </button>
+              </div>
+
+              {imageMode === 'upload' ? (
+                <div
+                  onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${isUploadingImage ? 'border-blue-500 cursor-wait' : 'border-gray-600 cursor-pointer hover:border-blue-500'}`}
+                >
+                  {isUploadingImage ? (
+                    <div className="flex items-center justify-center gap-2 text-blue-400">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">Upload en cours...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">Cliquer pour sélectionner une photo</p>
+                      <p className="text-xs text-gray-600 mt-1">JPG, PNG, WEBP — max 5MB</p>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+              ) : (
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleChange}
+                  placeholder="https://..."
+                  className="w-full"
+                />
+              )}
             </div>
           )}
 
