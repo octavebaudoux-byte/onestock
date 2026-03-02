@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { Settings, Sun, Moon, Globe, LogOut } from 'lucide-react'
+import { Settings, Sun, Moon, Globe, LogOut, Users, Eye, EyeOff } from 'lucide-react'
 import Layout from '../components/Layout'
 import { loadData } from '../lib/store'
 import { useTheme } from '../contexts/ThemeContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
+import { useAuth } from '../contexts/AuthContext'
+import { getCommunityPrefs, updateCommunityPrefs } from '../lib/supabase'
 
 export default function SettingsPage() {
   const [data, setData] = useState({ sneakers: [], sales: [], settings: {} })
@@ -13,12 +15,48 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme()
   const { language, changeLanguage, t } = useLanguage()
   const { logout } = useWhopAuth()
+  const { user } = useAuth()
+
+  // Préférences communauté
+  const [communityPrefs, setCommunityPrefs] = useState({
+    share_sales: false,
+    show_name: true,
+    display_name: '',
+  })
+  const [savingCommunity, setSavingCommunity] = useState(false)
+  const [communitySaved, setCommunitySaved] = useState(false)
 
   useEffect(() => {
     const loaded = loadData()
     setData(loaded)
     setIsLoaded(true)
   }, [])
+
+  useEffect(() => {
+    if (user?.id) {
+      getCommunityPrefs(user.id).then(prefs => {
+        if (prefs) setCommunityPrefs({ share_sales: prefs.share_sales, show_name: prefs.show_name, display_name: prefs.display_name || '' })
+      })
+    }
+  }, [user])
+
+  const handleCommunityToggle = async (field) => {
+    const newVal = !communityPrefs[field]
+    const newPrefs = { ...communityPrefs, [field]: newVal }
+    setCommunityPrefs(newPrefs)
+    if (user?.id) {
+      await updateCommunityPrefs(user.id, newPrefs)
+    }
+  }
+
+  const handleDisplayNameSave = async () => {
+    if (!user?.id) return
+    setSavingCommunity(true)
+    await updateCommunityPrefs(user.id, communityPrefs)
+    setSavingCommunity(false)
+    setCommunitySaved(true)
+    setTimeout(() => setCommunitySaved(false), 2000)
+  }
 
   if (!isLoaded) {
     return (
@@ -148,6 +186,85 @@ export default function SettingsPage() {
             <p className="text-gray-400 text-sm">
               <span className="font-semibold">OneStock</span> - {language === 'fr' ? 'Gestion de stock sneakers' : 'Sneaker inventory management'}
             </p>
+          </div>
+
+          {/* Communauté */}
+          <div className="card p-4 md:p-6 mb-4 md:mb-6">
+            <div className="flex items-center gap-3 mb-5">
+              <Users className="w-5 h-5 text-purple-400" />
+              <h3 className="text-lg font-semibold">{language === 'fr' ? 'Communauté' : 'Community'}</h3>
+            </div>
+
+            <p className="text-sm text-gray-400 mb-5">
+              {language === 'fr'
+                ? 'Partage tes ventes avec la communauté OneStock pour aider les autres revendeurs à connaître les prix du marché.'
+                : 'Share your sales with the OneStock community to help other resellers know market prices.'}
+            </p>
+
+            {/* Toggle : partager mes ventes */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-700">
+              <div>
+                <div className="font-medium text-sm">{language === 'fr' ? 'Partager mes ventes' : 'Share my sales'}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {language === 'fr' ? 'Tes prix de vente apparaîtront dans le Price Checker' : 'Your sell prices will appear in Price Checker'}
+                </div>
+              </div>
+              <button
+                onClick={() => handleCommunityToggle('share_sales')}
+                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${communityPrefs.share_sales ? 'bg-purple-600' : 'bg-gray-600'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${communityPrefs.share_sales ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {/* Toggle : afficher mon nom */}
+            {communityPrefs.share_sales && (
+              <>
+                <div className="flex items-center justify-between py-3 border-b border-gray-700">
+                  <div className="flex items-center gap-2">
+                    {communityPrefs.show_name ? <Eye className="w-4 h-4 text-gray-400" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+                    <div>
+                      <div className="font-medium text-sm">{language === 'fr' ? 'Afficher mon nom' : 'Show my name'}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {communityPrefs.show_name
+                          ? (language === 'fr' ? 'Ton nom sera visible' : 'Your name will be visible')
+                          : (language === 'fr' ? 'Tu apparaîtras comme "Anonyme"' : 'You will appear as "Anonymous"')}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleCommunityToggle('show_name')}
+                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${communityPrefs.show_name ? 'bg-blue-600' : 'bg-gray-600'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${communityPrefs.show_name ? 'translate-x-7' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {/* Nom d'affichage */}
+                {communityPrefs.show_name && (
+                  <div className="pt-3">
+                    <label className="block text-sm text-gray-400 mb-2">{language === 'fr' ? 'Pseudo affiché' : 'Display name'}</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={communityPrefs.display_name}
+                        onChange={(e) => setCommunityPrefs(prev => ({ ...prev, display_name: e.target.value }))}
+                        placeholder={language === 'fr' ? 'Ton pseudo...' : 'Your username...'}
+                        maxLength={30}
+                        className="flex-1 text-sm"
+                      />
+                      <button
+                        onClick={handleDisplayNameSave}
+                        disabled={savingCommunity}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 text-white text-sm rounded-lg transition-colors"
+                      >
+                        {communitySaved ? '✓' : (language === 'fr' ? 'Sauver' : 'Save')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Logout */}

@@ -31,6 +31,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
     notes: '',
     imageUrl: '',
     invoiceUrl: '',
+    returnDeadline: '',
     paymentStatus: 'pending',
     deliveryStatus: 'pending',
     listedOnPlatforms: [],
@@ -117,6 +118,7 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
         notes: '',
         imageUrl: '',
         invoiceUrl: '',
+        returnDeadline: '',
         paymentStatus: 'pending',
         deliveryStatus: 'pending',
         listedOnPlatforms: [],
@@ -654,6 +656,34 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Date limite de retour */}
+            <div className="mt-4">
+              <label className="block text-sm text-gray-400 mb-2">
+                🔄 Date limite de retour <span className="text-gray-600">(optionnel)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  name="returnDeadline"
+                  value={formData.returnDeadline}
+                  onChange={handleChange}
+                  className={`w-full ${
+                    formData.returnDeadline && new Date(formData.returnDeadline) < new Date()
+                      ? 'border-red-500 bg-red-500/10'
+                      : formData.returnDeadline && new Date(formData.returnDeadline) - new Date() < 3 * 24 * 60 * 60 * 1000
+                      ? 'border-amber-500 bg-amber-500/10'
+                      : ''
+                  }`}
+                />
+                {formData.returnDeadline && (() => {
+                  const diff = new Date(formData.returnDeadline) - new Date()
+                  if (diff < 0) return <p className="text-xs text-red-400 mt-1">⚠️ Date de retour dépassée</p>
+                  if (diff < 3 * 24 * 60 * 60 * 1000) return <p className="text-xs text-amber-400 mt-1">⏰ Retour dans moins de 3 jours</p>
+                  return <p className="text-xs text-gray-500 mt-1">Retour possible jusqu'au {new Date(formData.returnDeadline).toLocaleDateString('fr-FR')}</p>
+                })()}
               </div>
             </div>
 

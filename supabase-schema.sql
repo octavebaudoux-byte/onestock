@@ -55,6 +55,18 @@ ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all for sneakers" ON sneakers FOR ALL USING (true);
 CREATE POLICY "Allow all for expenses" ON expenses FOR ALL USING (true);
 
+-- Table: community_prefs (préférences de partage communautaire)
+CREATE TABLE IF NOT EXISTS community_prefs (
+  user_id TEXT PRIMARY KEY,
+  share_sales BOOLEAN DEFAULT false,
+  show_name BOOLEAN DEFAULT true,
+  display_name TEXT DEFAULT '',
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE community_prefs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for community_prefs" ON community_prefs FOR ALL USING (true);
+
 -- Storage bucket pour les images de sneakers
 -- A exécuter dans le SQL Editor de Supabase
 INSERT INTO storage.buckets (id, name, public)

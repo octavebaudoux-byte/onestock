@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Head from 'next/head'
-import { Search, TrendingUp, DollarSign, Loader2, X } from 'lucide-react'
+import { Search, TrendingUp, DollarSign, Loader2, X, Users } from 'lucide-react'
 import Layout from '../components/Layout'
 import { searchSneakers } from '../lib/sneakersDb'
 import { getCachedResults, setCachedResults } from '../lib/searchCache'
 import { useLanguage } from '../contexts/LanguageContext'
+import { formatPrice } from '../lib/store'
 
 export default function PriceChecker() {
   const { t, language } = useLanguage()
@@ -12,6 +13,8 @@ export default function PriceChecker() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [selectedSneaker, setSelectedSneaker] = useState(null)
+  const [communitySales, setCommunitySales] = useState([])
+  const [loadingCommunity, setLoadingCommunity] = useState(false)
   const debounceRef = useRef(null)
   const abortRef = useRef(null)
 
@@ -95,7 +98,22 @@ export default function PriceChecker() {
     setSearchQuery('')
     setSearchResults([])
     setSelectedSneaker(null)
+    setCommunitySales([])
   }
+
+  // Charger les ventes communautaires quand un sneaker est sélectionné
+  useEffect(() => {
+    if (!selectedSneaker) { setCommunitySales([]); return }
+    setLoadingCommunity(true)
+    const params = new URLSearchParams()
+    if (selectedSneaker.sku) params.set('sku', selectedSneaker.sku)
+    else params.set('name', selectedSneaker.name)
+    fetch(`/api/community/sales?${params}`)
+      .then(r => r.json())
+      .then(data => setCommunitySales(data.sales || []))
+      .catch(() => setCommunitySales([]))
+      .finally(() => setLoadingCommunity(false))
+  }, [selectedSneaker])
 
   return (
     <>
@@ -248,6 +266,53 @@ export default function PriceChecker() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Ventes communautaires */}
+          {selectedSneaker && (
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-5 h-5 text-purple-400" />
+                <h3 className="text-lg font-bold text-white">
+                  {language === 'fr' ? 'Ventes de la communauté' : 'Community sales'}
+                </h3>
+                {loadingCommunity && <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />}
+              </div>
+
+              {loadingCommunity ? null : communitySales.length > 0 ? (
+                <div className="space-y-2">
+                  {/* Header */}
+                  <div className="grid grid-cols-5 gap-3 px-4 text-xs text-gray-500 font-medium">
+                    <span>{language === 'fr' ? 'Taille' : 'Size'}</span>
+                    <span>{language === 'fr' ? 'Prix vendu' : 'Sold price'}</span>
+                    <span>{language === 'fr' ? 'Profit' : 'Profit'}</span>
+                    <span>{language === 'fr' ? 'Plateforme' : 'Platform'}</span>
+                    <span>{language === 'fr' ? 'Vendeur' : 'Seller'}</span>
+                  </div>
+                  {communitySales.map((sale, i) => (
+                    <div key={i} className="grid grid-cols-5 gap-3 items-center px-4 py-3 bg-dark-800 border border-purple-500/20 rounded-xl">
+                      <span className="text-white font-medium text-sm">{sale.size || '—'}</span>
+                      <span className="text-emerald-400 font-bold text-sm">{formatPrice(sale.sellPrice)}</span>
+                      <span className={`font-semibold text-sm ${sale.profit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                        {sale.profit >= 0 ? '+' : ''}{formatPrice(sale.profit)}
+                      </span>
+                      <span className="text-gray-400 text-sm">{sale.platform || '—'}</span>
+                      <span className="text-purple-300 text-sm">{sale.seller}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-dark-800 border border-purple-500/10 rounded-xl">
+                  <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">
+                    {language === 'fr' ? 'Aucune vente communautaire pour ce sneaker' : 'No community sales for this sneaker'}
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">
+                    {language === 'fr' ? 'Active le partage dans les paramètres pour contribuer' : 'Enable sharing in settings to contribute'}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
