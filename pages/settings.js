@@ -14,12 +14,12 @@ export default function SettingsPage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { language, changeLanguage, t } = useLanguage()
-  const { logout } = useWhopAuth()
+  const { logout, user: whopUser } = useWhopAuth()
   const { user } = useAuth()
 
   // Préférences communauté
   const [communityPrefs, setCommunityPrefs] = useState({
-    share_sales: false,
+    share_sales: true,
     show_name: true,
     display_name: '',
   })
@@ -35,10 +35,22 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user?.id) {
       getCommunityPrefs(user.id).then(prefs => {
-        if (prefs) setCommunityPrefs({ share_sales: prefs.share_sales, show_name: prefs.show_name, display_name: prefs.display_name || '' })
+        const whopUsername = whopUser?.username || ''
+        if (prefs) {
+          setCommunityPrefs({
+            share_sales: prefs.share_sales ?? true,
+            show_name: prefs.show_name ?? true,
+            display_name: prefs.display_name || whopUsername,
+          })
+        } else {
+          // Première connexion : défauts avec username Whop
+          const defaults = { share_sales: true, show_name: true, display_name: whopUsername }
+          setCommunityPrefs(defaults)
+          updateCommunityPrefs(user.id, defaults)
+        }
       })
     }
-  }, [user])
+  }, [user, whopUser])
 
   const handleCommunityToggle = async (field) => {
     const newVal = !communityPrefs[field]
