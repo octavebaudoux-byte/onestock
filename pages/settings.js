@@ -217,26 +217,26 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            {/* Toggle : afficher mon nom */}
+            {/* Toggle : masquer mon nom */}
             {communityPrefs.share_sales && (
               <>
                 <div className="flex items-center justify-between py-3 border-b border-gray-700">
                   <div className="flex items-center gap-2">
-                    {communityPrefs.show_name ? <Eye className="w-4 h-4 text-gray-400" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+                    {!communityPrefs.show_name ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
                     <div>
-                      <div className="font-medium text-sm">{language === 'fr' ? 'Afficher mon nom' : 'Show my name'}</div>
+                      <div className="font-medium text-sm">{language === 'fr' ? 'Masquer mon nom' : 'Hide my name'}</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {communityPrefs.show_name
-                          ? (language === 'fr' ? 'Ton nom sera visible' : 'Your name will be visible')
-                          : (language === 'fr' ? 'Tu apparaîtras comme "Anonyme"' : 'You will appear as "Anonymous"')}
+                        {!communityPrefs.show_name
+                          ? (language === 'fr' ? 'Tu apparaîs comme "Anonyme"' : 'You appear as "Anonymous"')
+                          : (language === 'fr' ? 'Ton pseudo sera visible par les autres' : 'Your username will be visible to others')}
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => handleCommunityToggle('show_name')}
-                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${communityPrefs.show_name ? 'bg-blue-600' : 'bg-gray-600'}`}
+                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${!communityPrefs.show_name ? 'bg-red-600' : 'bg-gray-600'}`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${communityPrefs.show_name ? 'translate-x-7' : 'translate-x-1'}`} />
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${!communityPrefs.show_name ? 'translate-x-7' : 'translate-x-1'}`} />
                   </button>
                 </div>
 

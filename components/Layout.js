@@ -13,7 +13,8 @@ import {
   CreditCard,
   Search,
   Calendar,
-  User
+  User,
+  Users
 } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -30,6 +31,7 @@ export default function Layout({ children, onAddClick, onAddSaleClick }) {
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
     { href: '/price-checker', icon: Search, label: language === 'fr' ? 'Prix' : 'Prices' },
+    { href: '/community', icon: Users, label: language === 'fr' ? 'Communauté' : 'Community' },
     { href: '/inventory', icon: Package, label: t('nav.inventory') },
     { href: '/sales', icon: ShoppingBag, label: t('nav.sales') },
     { href: '/expenses', icon: CreditCard, label: t('nav.expenses') },
