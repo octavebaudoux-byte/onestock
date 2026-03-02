@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Search, FileText, Loader2, Receipt, Upload, Link } from 'lucide-react'
-import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, generateId, getSizesForBrand } from '../lib/store'
+import { POPULAR_BRANDS, PLATFORMS, BUY_PLATFORMS, CONDITIONS, CATEGORIES, RETURN_POLICIES, generateId, getSizesForBrand } from '../lib/store'
 import { searchSneakers } from '../lib/sneakersDb'
 import { getCachedResults, setCachedResults } from '../lib/searchCache'
 import { useToast } from '../contexts/ToastContext'
@@ -47,6 +47,15 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
   const [isSearching, setIsSearching] = useState(false)
   const [apiError, setApiError] = useState(null)
   const latestQueryRef = useRef('')
+
+  // Auto-calcul de la date de retour selon la plateforme d'achat
+  useEffect(() => {
+    const policy = RETURN_POLICIES[formData.buyPlatform]
+    if (!policy || !formData.buyDate) return
+    const deadline = new Date(formData.buyDate)
+    deadline.setDate(deadline.getDate() + policy.days)
+    setFormData(prev => ({ ...prev, returnDeadline: deadline.toISOString().split('T')[0] }))
+  }, [formData.buyPlatform, formData.buyDate])
 
   // Image upload state
   const [imageMode, setImageMode] = useState('upload')
@@ -661,30 +670,86 @@ export default function SneakerModal({ isOpen, onClose, onSave, sneaker, mode = 
 
             {/* Date limite de retour */}
             <div className="mt-4">
-              <label className="block text-sm text-gray-400 mb-2">
-                🔄 Date limite de retour <span className="text-gray-600">(optionnel)</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="returnDeadline"
-                  value={formData.returnDeadline}
-                  onChange={handleChange}
-                  className={`w-full ${
-                    formData.returnDeadline && new Date(formData.returnDeadline) < new Date()
-                      ? 'border-red-500 bg-red-500/10'
-                      : formData.returnDeadline && new Date(formData.returnDeadline) - new Date() < 3 * 24 * 60 * 60 * 1000
-                      ? 'border-amber-500 bg-amber-500/10'
-                      : ''
-                  }`}
-                />
-                {formData.returnDeadline && (() => {
-                  const diff = new Date(formData.returnDeadline) - new Date()
-                  if (diff < 0) return <p className="text-xs text-red-400 mt-1">⚠️ Date de retour dépassée</p>
-                  if (diff < 3 * 24 * 60 * 60 * 1000) return <p className="text-xs text-amber-400 mt-1">⏰ Retour dans moins de 3 jours</p>
-                  return <p className="text-xs text-gray-500 mt-1">Retour possible jusqu'au {new Date(formData.returnDeadline).toLocaleDateString('fr-FR')}</p>
-                })()}
-              </div>
+              {(() => {
+                const policy = RETURN_POLICIES[formData.buyPlatform]
+                const daysLeft = formData.returnDeadline
+                  ? Math.ceil((new Date(formData.returnDeadline) - new Date()) / (1000 * 60 * 60 * 24))
+                  : null
+
+                const colorClass = daysLeft === null ? '' :
+                  daysLeft < 0   ? 'border-red-500 bg-red-500/10' :
+                  daysLeft <= 2  ? 'border-red-500 bg-red-500/10' :
+                  daysLeft <= 5  ? 'border-orange-500 bg-orange-500/10' :
+                  daysLeft <= 10 ? 'border-amber-400 bg-amber-400/10' :
+                  daysLeft <= 15 ? 'border-yellow-400 bg-yellow-400/10' :
+                                   'border-emerald-500 bg-emerald-500/10'
+
+                const badge = daysLeft === null ? null :
+                  daysLeft < 0   ? { emoji: '🔴', text: `Délai dépassé (${Math.abs(daysLeft)}j)`, cls: 'text-red-400 bg-red-500/10 border-red-500/30' } :
+                  daysLeft === 0 ? { emoji: '🔴', text: "Retour aujourd'hui !", cls: 'text-red-400 bg-red-500/10 border-red-500/30' } :
+                  daysLeft <= 2  ? { emoji: '🔴', text: `${daysLeft}j restant${daysLeft > 1 ? 's' : ''}`, cls: 'text-red-400 bg-red-500/10 border-red-500/30' } :
+                  daysLeft <= 5  ? { emoji: '🟠', text: `${daysLeft}j restants`, cls: 'text-orange-400 bg-orange-500/10 border-orange-500/30' } :
+                  daysLeft <= 10 ? { emoji: '🟡', text: `${daysLeft}j restants`, cls: 'text-amber-400 bg-amber-500/10 border-amber-500/30' } :
+                  daysLeft <= 15 ? { emoji: '🔵', text: `${daysLeft}j restants`, cls: 'text-blue-400 bg-blue-500/10 border-blue-500/30' } :
+                                   { emoji: '🟢', text: `${daysLeft}j restants`, cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' }
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm text-gray-400">🔄 Date limite de retour</label>
+                      {policy && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${policy.free ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-orange-400 bg-orange-500/10 border-orange-500/30'}`}>
+                          {policy.free ? `✓ Gratuit · ${policy.days}j` : `${policy.cost || 'Payant'} · ${policy.days}j`}
+                        </span>
+                      )}
+                    </div>
+
+                    <input
+                      type="date"
+                      name="returnDeadline"
+                      value={formData.returnDeadline}
+                      onChange={handleChange}
+                      className={`w-full transition-colors ${colorClass}`}
+                    />
+
+                    {/* Barre de progression + badge */}
+                    {daysLeft !== null && policy && (
+                      <div className="mt-2">
+                        <div className="w-full h-1.5 bg-dark-600 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              daysLeft < 0   ? 'bg-red-500 w-full' :
+                              daysLeft <= 2  ? 'bg-red-500' :
+                              daysLeft <= 5  ? 'bg-orange-500' :
+                              daysLeft <= 10 ? 'bg-amber-400' :
+                              daysLeft <= 15 ? 'bg-blue-400' :
+                                               'bg-emerald-500'
+                            }`}
+                            style={{ width: daysLeft < 0 ? '100%' : `${Math.min(100, Math.max(2, ((policy.days - daysLeft) / policy.days) * 100))}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between mt-1.5">
+                          {badge && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full border ${badge.cls}`}>
+                              {badge.emoji} {badge.text}
+                            </span>
+                          )}
+                          {policy.note && (
+                            <span className="text-xs text-gray-600 ml-auto">{policy.note}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Si pas de politique connue mais date remplie manuellement */}
+                    {daysLeft !== null && !policy && badge && (
+                      <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full border ${badge.cls}`}>
+                        {badge.emoji} {badge.text}
+                      </span>
+                    )}
+                  </>
+                )
+              })()}
             </div>
 
             {/* Plateforme de mise en vente et Prix cible - visible en mode add et edit (si en stock) */}
