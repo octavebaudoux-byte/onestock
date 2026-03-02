@@ -6,7 +6,6 @@ import { loadData } from '../lib/store'
 import { useTheme } from '../contexts/ThemeContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useWhopAuth } from '../contexts/WhopAuthContext'
-import { useAuth } from '../contexts/AuthContext'
 import { getCommunityPrefs, updateCommunityPrefs } from '../lib/supabase'
 
 export default function SettingsPage() {
@@ -15,7 +14,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme()
   const { language, changeLanguage, t } = useLanguage()
   const { logout, user: whopUser } = useWhopAuth()
-  const { user } = useAuth()
+  const userId = whopUser?.email || null
 
   // Préférences communauté
   const [communityPrefs, setCommunityPrefs] = useState({
@@ -33,38 +32,37 @@ export default function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    if (user?.id) {
-      getCommunityPrefs(user.id).then(prefs => {
-        const whopUsername = whopUser?.username || ''
-        if (prefs) {
-          setCommunityPrefs({
-            share_sales: prefs.share_sales ?? true,
-            show_name: prefs.show_name ?? true,
-            display_name: prefs.display_name || whopUsername,
-          })
-        } else {
-          // Première connexion : défauts avec username Whop
-          const defaults = { share_sales: true, show_name: true, display_name: whopUsername }
-          setCommunityPrefs(defaults)
-          updateCommunityPrefs(user.id, defaults)
-        }
-      })
-    }
-  }, [user, whopUser])
+    if (!userId) return
+    getCommunityPrefs(userId).then(prefs => {
+      const whopUsername = whopUser?.username || ''
+      if (prefs) {
+        setCommunityPrefs({
+          share_sales: prefs.share_sales ?? true,
+          show_name: prefs.show_name ?? true,
+          display_name: prefs.display_name || whopUsername,
+        })
+      } else {
+        // Première connexion : défauts avec username Whop
+        const defaults = { share_sales: true, show_name: true, display_name: whopUsername }
+        setCommunityPrefs(defaults)
+        updateCommunityPrefs(userId, defaults)
+      }
+    })
+  }, [userId, whopUser])
 
   const handleCommunityToggle = async (field) => {
     const newVal = !communityPrefs[field]
     const newPrefs = { ...communityPrefs, [field]: newVal }
     setCommunityPrefs(newPrefs)
-    if (user?.id) {
-      await updateCommunityPrefs(user.id, newPrefs)
+    if (userId) {
+      await updateCommunityPrefs(userId, newPrefs)
     }
   }
 
   const handleDisplayNameSave = async () => {
-    if (!user?.id) return
+    if (!userId) return
     setSavingCommunity(true)
-    await updateCommunityPrefs(user.id, communityPrefs)
+    await updateCommunityPrefs(userId, communityPrefs)
     setSavingCommunity(false)
     setCommunitySaved(true)
     setTimeout(() => setCommunitySaved(false), 2000)
