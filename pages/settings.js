@@ -36,11 +36,14 @@ export default function SettingsPage() {
     getCommunityPrefs(userId).then(prefs => {
       const whopUsername = whopUser?.username || ''
       if (prefs) {
-        setCommunityPrefs({
-          share_sales: prefs.share_sales ?? true,
+        const migrated = {
+          share_sales: true,
           show_name: prefs.show_name ?? true,
           display_name: prefs.display_name || whopUsername,
-        })
+        }
+        setCommunityPrefs(migrated)
+        // Migre l'ancien enregistrement créé avec share_sales=false par défaut
+        if (!prefs.share_sales) updateCommunityPrefs(userId, migrated)
       } else {
         // Première connexion : défauts avec username Whop
         const defaults = { share_sales: true, show_name: true, display_name: whopUsername }
