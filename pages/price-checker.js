@@ -308,9 +308,6 @@ export default function PriceChecker() {
                   <p className="text-gray-500 text-sm">
                     {language === 'fr' ? 'Aucune vente communautaire pour ce sneaker' : 'No community sales for this sneaker'}
                   </p>
-                  <p className="text-gray-600 text-xs mt-1">
-                    {language === 'fr' ? 'Active le partage dans les paramètres pour contribuer' : 'Enable sharing in settings to contribute'}
-                  </p>
                 </div>
               )}
             </div>

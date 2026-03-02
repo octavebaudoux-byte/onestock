@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { Users, TrendingUp, DollarSign, Loader2, Settings, ArrowRight } from 'lucide-react'
+import { Users, Loader2, Settings, ArrowRight } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useWhopAuth } from '../contexts/WhopAuthContext'
+import { getCommunityPrefs } from '../lib/supabase'
 import { formatPrice } from '../lib/store'
 
 export default function CommunityPage() {
   const { language } = useLanguage()
+  const { user: whopUser } = useWhopAuth()
   const [sales, setSales] = useState([])
   const [stats, setStats] = useState({ total: 0, avgProfit: 0, sellers: 0 })
   const [loading, setLoading] = useState(true)
+  const [userSharing, setUserSharing] = useState(true)
 
   useEffect(() => {
     fetch('/api/community/recent')
@@ -22,6 +26,14 @@ export default function CommunityPage() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const userId = whopUser?.email
+    if (!userId) return
+    getCommunityPrefs(userId).then(prefs => {
+      setUserSharing(prefs ? (prefs.share_sales ?? true) : true)
+    })
+  }, [whopUser])
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '—'
@@ -91,18 +103,28 @@ export default function CommunityPage() {
               <h3 className="text-lg font-bold text-gray-300 mb-2">
                 {language === 'fr' ? 'Aucune vente partagée pour l\'instant' : 'No shared sales yet'}
               </h3>
-              <p className="text-sm text-gray-500 mb-5">
-                {language === 'fr'
-                  ? 'Sois le premier à partager tes ventes avec la communauté !'
-                  : 'Be the first to share your sales with the community!'}
-              </p>
-              <Link
-                href="/settings"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition-colors"
-              >
-                {language === 'fr' ? 'Activer le partage' : 'Enable sharing'}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {userSharing ? (
+                <p className="text-sm text-gray-500">
+                  {language === 'fr'
+                    ? 'Tes ventes marquées "Vendu" apparaîtront ici une fois partagées.'
+                    : 'Your sold items will appear here once shared.'}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 mb-5">
+                    {language === 'fr'
+                      ? 'Sois le premier à partager tes ventes avec la communauté !'
+                      : 'Be the first to share your sales with the community!'}
+                  </p>
+                  <Link
+                    href="/settings"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition-colors"
+                  >
+                    {language === 'fr' ? 'Activer le partage' : 'Enable sharing'}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <>
